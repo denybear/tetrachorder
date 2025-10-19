@@ -29,16 +29,18 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/pio.h"
-#include "ws2812.pio.h"			// in pico_examples git
-
+// USB midi device
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "tusb_config.h"
-
+// rotary encoder + button
 #include "encoder.c"
+#include "button.c"
+// matrix keypad
 #include "keypad.c"
 #include "keypad.h"
-
+// neopixel LEDs
+#include "ws2812.pio.h"			// in pico_examples git
 
 /*************************************/
 /* Matrix Keypad callbacks & globals */
@@ -87,13 +89,17 @@ void key_long_pressed(uint8_t key){
 }
 
 
-/***************************/
-/* Rotary Encoder callback */
-/***************************/
+/**************************************/
+/* Rotary Encoder and button callback */
+/**************************************/
 
 void onchange(rotary_encoder_t *encoder) {
   printf("Position: %d\n", encoder->position);
   printf("State: %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
+}
+
+void onpress(button_t *button) {
+  printf("Button pressed: %s\n", button->state ? "Off" : "On");
 }
 
 
@@ -187,7 +193,10 @@ int main(void)
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
 	printf("Rotary Encoder created and it's state is %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
 	printf("Rotary Encoder created and it's position is %d\n", encoder->position);
+	button_t *button = create_button(21, onpress);
+	printf("Button created and it's state is %d\n", button->state);
 
+	
 	// Matrix keyboard inits
 	// Apply the keypad configuration defined earlier and declare the number of columns and rows
 	keypad_init(&keypad, cols, rows, 4, 4);
