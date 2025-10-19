@@ -49,12 +49,12 @@
 /**
  * @brief Define the keypad matrix column GPIOs
  */
-const uint8_t cols[] = {4, 5, 6, 7};
+const uint8_t cols[] = {5};
 
 /**
  * @brief Define the keypad matrix row GPIOs
  */
-const uint8_t rows[] = {0, 1, 2, 3};
+const uint8_t rows[] = {6, 7};
 
 /**
  * @brief Create the keypad matrix structure
@@ -193,13 +193,13 @@ int main(void)
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
 	printf("Rotary Encoder created and it's state is %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
 	printf("Rotary Encoder created and it's position is %d\n", encoder->position);
-	button_t *button = create_button(21, onpress);
+	button_t *button = create_button(4, onpress);
 	printf("Button created and it's state is %d\n", button->state);
 
 	
 	// Matrix keyboard inits
 	// Apply the keypad configuration defined earlier and declare the number of columns and rows
-	keypad_init(&keypad, cols, rows, 4, 4);
+	keypad_init(&keypad, cols, rows, 1, 2);
 	// Assign the callbacks for each event
 	keypad_on_press(&keypad, key_pressed);
 	keypad_on_release(&keypad, key_released);
@@ -218,7 +218,7 @@ int main(void)
 	// main
 	while (true) {
 		tud_task(); 		// tinyusb device task
-		midi_task();	// manage midi tasks
+		midi_task(encoder);	// manage midi tasks
 
 		// Poll the keypad
 		keypad_read(&keypad);
@@ -292,7 +292,7 @@ void tud_resume_cb(void)
 // MIDI Task
 //--------------------------------------------------------------------+
 
-void midi_task()
+void midi_task(rotary_encoder_t *encoder)
 {
 	uint8_t const cable_num = 0; // MIDI jack associated with USB endpoint
 
@@ -330,21 +330,12 @@ void midi_task()
 	}
 
 
-/*
-TO UPDATE BASED ON MIDI NOTES TO BE SENT
-
 	// check if state has changed, ie. pedal has just been pressed or unpressed
-	if (pd->change_state) {
+	uint8_t note_on[4] = { (cable_num << 4) | CIN_NOTEON, MIDI_NOTEON | CHANNEL, 0, 127 };
 
-		uint8_t note_on[4] = { (cable_num << 4) | CIN_NOTEON, MIDI_NOTEON | CHANNEL, 0, 127 };
-
-		if (pd->value & SW1) {
-			// Send Note On for current switch at full velocity (127) on channel.
-			note_on[2] = NOTE_SW1;
-			tud_midi_packet_write (note_on);
-		}
-	}
-*/
-
+	// Send Note On for current switch at full velocity (127) on channel.
+	note_on[2] = 0x00;
+	note_on[3] = encoder->position & 0x7F;
+	tud_midi_packet_write (note_on);
 }
 
