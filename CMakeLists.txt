@@ -27,9 +27,10 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
-# ADDED BY DENIS
-#include(pico_extras_import.cmake)
-# ADDED BY DENIS
+# We also need PICO EXTRAS
+set(PICO_EXTRAS_PATH ${USERHOME}/pico-extras)	# <==== Change the path to the pico-extras folder here
+include(${PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
+
 
 project(tetrachorder C CXX ASM)
 
@@ -37,13 +38,10 @@ project(tetrachorder C CXX ASM)
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
-
 add_executable(tetrachorder tetrachorder.c usb_descriptors.c
-# ADDED BY DENIS
-#    audio.hpp
-#    synth.cpp
-#    synth.hpp
-# ADDED BY DENIS
+    audio.hpp
+    synth.cpp
+    synth.hpp
 )
 
 pico_set_program_name(tetrachorder "tetrachorder")
@@ -53,14 +51,11 @@ pico_set_program_version(tetrachorder "0.1")
 pico_enable_stdio_uart(tetrachorder 1)
 pico_enable_stdio_usb(tetrachorder 0)
 
-# ADDED BY DENIS
 #define for our example code
-#target_compile_definitions(tetrachorder PRIVATE
-#	USE_AUDIO_I2S=1
-#	PICO_AUDIO_I2S_MONO_INPUT=1
-#)
-# ADDED BY DENIS
-
+target_compile_definitions(tetrachorder PRIVATE
+	USE_AUDIO_I2S=1
+	PICO_AUDIO_I2S_MONO_INPUT=1
+)
 
 # Add the standard library to the build
 target_link_libraries(tetrachorder
@@ -68,9 +63,7 @@ target_link_libraries(tetrachorder
         hardware_pio
         tinyusb_device
         tinyusb_board
-# ADDED BY DENIS
-#        pico_audio_i2s
-# ADDED BY DENIS
+        pico_audio_i2s
         )
 
 # Add the standard include files to the build
