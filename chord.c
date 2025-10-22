@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-
-
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#include "pico/stdlib.h"
 
 /***********************************/
 /* definition of a chord structure */
@@ -41,7 +38,7 @@ void reset_rootnote (void *pointer) {
 bool set_rootnote (uint8_t root, void *pointer) {
 	// C=1 C#=2 D=3 D#=4 E=5 F=6 F#=7 G=8 G#=9 A=10 A#=11 B=12
 	chord_t *chord = (chord_t *)pointer;
-	if (root < 1) || (root > 12) {
+	if ((root < 1) || (root > 12)) {
 		chord->rootnote = 0;
 		chord->bitmap = 0;	
 		chord->bass = 0;
@@ -71,7 +68,7 @@ void reset_bass (void *pointer) {
 bool set_bass (uint8_t root, void *pointer) {
 	// C=1 C#=2 D=3 D#=4 E=5 F=6 F#=7 G=8 G#=9 A=10 A#=11 B=12
 	chord_t *chord = (chord_t *)pointer;
-	if (root < 1) || (root > 12) {
+	if ((root < 1) || (root > 12)) {
 		chord->bass = 0;
 		return false;
 	}
@@ -83,7 +80,7 @@ bool set_bass (uint8_t root, void *pointer) {
 bool set_bass_from_root (void *pointer) {
 	// C=1 C#=2 D=3 D#=4 E=5 F=6 F#=7 G=8 G#=9 A=10 A#=11 B=12
 	chord_t *chord = (chord_t *)pointer;
-	if (chord->rootnote < 1) || (chord->rootnote > 12) {
+	if ((chord->rootnote < 1) || (chord->rootnote > 12)) {
 		chord->bass = 0;
 		return false;
 	}
@@ -92,13 +89,6 @@ bool set_bass_from_root (void *pointer) {
 }
 
 // Following functions are to set/reset some of the notes in the chord: major3rd or minor3rd, 5th or flat 5th, 7th or major7th, 9th, 11th
-void reset_3 (void *pointer) {
-	chord_t *chord = (chord_t *)pointer;
-	chord->bitmap &= 0b111001111111111111111111;
-//                     R 2334 5 677R 9  1   1
-//                        mM     mM     1   3
-}
-
 void reset_3 (void *pointer) {
 	chord_t *chord = (chord_t *)pointer;
 	chord->bitmap &= 0b111001111111111111111111;
@@ -218,8 +208,8 @@ int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bas
 
 	// start with main chord first
 	if (chord->rootnote == 0) return 0;					// no chord available : exit
-	start_voicing = voicing % 12;
-	end_voicing = start_voicing + 11;
+	int start_voicing = voicing % 12;
+	int end_voicing = start_voicing + 11;
 	voicing = ((int) (voicing / 12)) * 12;				// voicing to be multiple of 12
 	
 	uint32_t ch = chord->bitmap;
@@ -230,7 +220,7 @@ int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bas
 		if ((ch & 0b100000000000000000000000) != 0) {			// test MSB
 			int elt = (chord->rootnote - 1) + index;			// note to be played (C being 1)
 
-			# now, make sure the chord is in the voicing
+			// now, make sure the chord is in the voicing
 			if (elt < start_voicing) elt += 12;
 			if (elt > end_voicing) elt -=12;	
 			elt = elt + voicing;								// add to final voicing: this is the "note" in the midi message
@@ -247,12 +237,12 @@ int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bas
 
 	// manage bass
 	if (chord->bass == 0) return nb;							// no bass available : exit
-	start_voicing_bass = voicing_bass % 12;
-	end_voicing_bass = start_voicing_bass + 11;
+	int start_voicing_bass = voicing_bass % 12;
+	int end_voicing_bass = start_voicing_bass + 11;
 	voicing_bass = ((int) (voicing_bass / 12)) * 12;			// voicing_bass to be multiple of 12
 	
 	int elt = (chord->bass - 1);								// note to be played (C being 1)
-	# now, make sure the chord is in the voicing
+	// now, make sure the chord is in the voicing
 	if (elt < start_voicing_bass) elt += 12;
 	if (elt > end_voicing_bass) elt -=12;	
 	elt = elt + voicing_bass;									// add to final voicing: this is the "note" in the midi message

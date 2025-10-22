@@ -10,7 +10,7 @@
 #ifndef RP2040_KEYPAD_H
 #define RP2040_KEYPAD_H
 
-#include <pico/stdlib.h>
+#include "pico/stdlib.h"
 
 #ifdef __cplusplus
 extern "C" {

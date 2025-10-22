@@ -41,6 +41,45 @@
 #include "keypad.h"
 // neopixel LEDs
 #include "ws2812.pio.h"			// in pico_examples git
+// keyboard parsing and chords
+#include "kdb_events.c"
+
+/*************************************/
+/* MACRO CONSTANT TYPEDEF PROTOTYPES */
+/*************************************/
+// MIDI constants
+#define MIDI_NOTEON		0x90
+#define MIDI_NOTEOFF	0x80
+#define MIDI_PGMCHANGE	0xC0
+#define CIN_NOTEON		0x9
+#define CIN_NOTEOFF		0x8
+#define CIN_PGMCHANGE	0xC
+#define CHANNEL			0	 // midi channel 1
+
+// function prototypes
+void midi_task();
+
+
+/******************************/
+/* Init main global variables */
+/******************************/
+chord_t *chord;							// current chord to be played
+uint8_t midi_notes [10];				// buffer containing the midi notes of the current chord
+int midi_notes_size;
+uint8_t former_midi_notes [10];			// buffer containing the midi notes of the former chord
+int former_midi_notes_size = 0;
+uint8_t midi_notes_on [10];				// buffer for midi note_on to be played
+int midi_notes_on_size;
+uint8_t midi_notes_off [10];			// buffer for midi note_off to be played
+int midi_notes_off_size;
+uint8_t former_instrument = 0;			// number of instrument selected
+uint8_t instrument;						// number of instrument selected
+bool force_instrument = true;			// force sending program change at start of the program
+int voicing = 60;						// C3: voicing for the chord
+int voicing_bass = 36;					// C1: voicing for the bass
+bool no_bass = false;					// true if we should play no bass
+bool is_bass_voicing = false;			// true if encoder drives bass voicing, else encoder drives regular chord voicing
+
 
 /*************************************/
 /* Matrix Keypad callbacks & globals */
@@ -94,12 +133,37 @@ void key_long_pressed(uint8_t key){
 /**************************************/
 
 void onchange(rotary_encoder_t *encoder) {
-  printf("Position: %d\n", encoder->position);
-  printf("State: %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
+	if (is_bass_voicing) {
+		// we change bass voicing
+		voicing_bass += encoder->direction;
+		if (voicing_bass < 0) {
+			voicing_bass = -1;
+			no_bass = true;
+			printf("voicing_bass is off\n");
+		}
+		else {
+			voicing_bass = MAX (0, voicing_bass);
+			voicing_bass = MIN ((127-12), voicing_bass);			
+			no_bass = false;
+			printf("voicing_bass is on, value is: %d\n", voicing_bass);
+		}
+	}
+	else {
+		// we change regular voicing
+		voicing += encoder->direction;
+		voicing = MAX (0, voicing);
+		voicing = MIN ((127-12), voicing);
+		printf("voicing is on, value is: %d\n", voicing);		
+	}
+	//printf("Position: %d\n", encoder->position);
+	//printf("State: %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
 }
 
 void onpress(button_t *button) {
-  printf("Button pressed: %s\n", button->state ? "Off" : "On");
+	if (!button->state) {				// we do this only when the button is pressed, but not depressed
+		is_bass_voicing = is_bass_voicing ? false : true;
+		printf("Button pressed, is_bass_voicing is: %s\n", is_bass_voicing ? "true (we select bass voicing)" : "false (we select regular voicing)");
+	}
 }
 
 
@@ -158,21 +222,6 @@ void light_strip (uint32_t color) {
  * - MacOS: SimpleSynth
  */
 
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF PROTOTYPES
-//--------------------------------------------------------------------+
-
-// MIDI constants
-#define MIDI_NOTEON	0x90
-#define CIN_NOTEON	0x9
-#define CHANNEL		0	 // midi channel 1
-
-// midi notes corresponding to foot pedal switches
-#define NOTE_SW1	0
-
-
-// function prototypes
-void midi_task();
 
 
 /*------------- MAIN -------------*/
@@ -188,6 +237,9 @@ int main(void)
 	if (board_init_after_tusb) {
 		board_init_after_tusb();
 	}
+
+	// Globals init
+	chord = create_chord ();		// current chord to be played
 
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
@@ -214,20 +266,33 @@ int main(void)
 	//ws2812_program_init (pio, sm, offset, LED_PIN, 800000, false);
 	// End of NeoPixel inits
 
-
 	// main
 	while (true) {
-		tud_task(); 		// tinyusb device task
-		midi_task(encoder);	// manage midi tasks
-
 		// Poll the keypad
-		keypad_read(&keypad);
+		//keypad_read(&keypad);
 		/* Alternatively, the output of keypad_read() can
 		be stored as a pointer to the array containing
-		the state of each key:
-		bool *pressed = keypad_read(&keypad);
-		*/
+		the state of each key: */
+		bool *pressed = keypad_read (&keypad);
 		sleep_ms(5);
+
+		instrument = parse_keyboard (chord, pressed);	// analyse key presses to get which chord has been selected
+		if (no_bass) reset_bass (chord);				// remove bass note in case we don't want to play it
+		// midi_notes that are contained in the chord
+		midi_notes_size = get_midi_notes (midi_notes, chord, voicing, voicing_bass);
+		// determine lists of notes which should be on / off
+		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, midi_notes_on);
+		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size, midi_notes_off);
+
+		tud_task(); 		// tinyusb device task
+		midi_task();		// manage midi tasks, send notes, send program select
+
+		// make new chord & instrument become former chord & instrument
+		former_instrument = instrument;
+/*****HERE: there could be an issue; former midi notes should contain more than this? */
+		memcpy (former_midi_notes, midi_notes, midi_notes_size);
+		former_midi_notes_size = midi_notes_size;
+
 
 /* Neopixel part
 		// manage neopixel led strip: light the strip with the right color; in case of black, wait 150ms before unlighting
@@ -292,7 +357,7 @@ void tud_resume_cb(void)
 // MIDI Task
 //--------------------------------------------------------------------+
 
-void midi_task(rotary_encoder_t *encoder)
+void midi_task()
 {
 	uint8_t const cable_num = 0; // MIDI jack associated with USB endpoint
 
@@ -305,15 +370,16 @@ void midi_task(rotary_encoder_t *encoder)
 	// here, we check for note_on event, and if received, then we light the Neopixel strip
 	uint8_t packet[4];
 	bool read = false;
+	int i;
 
 	while ( tud_midi_available() ) {
-		read = tud_midi_packet_read (packet);	// read midi EVENT
+		read = tud_midi_packet_read (packet);	// read midi EVENT (and we don't care)
 		
 		// byte 0 = cable number | Code Index Number (CIN)
 		// byte 1 = MIDI 0 
 		// byte 2 = MIDI 1 
 		// byte 3 = MIDI 2
-		// CIN = 0x08 for note off, 0x09 for note on 
+		// CIN = 0x08 for note off, 0x09 for note on, 0x0B for control change, 0x0C for program change, etc
 
 /*
 		// NeoPixel part
@@ -329,13 +395,34 @@ void midi_task(rotary_encoder_t *encoder)
 
 	}
 
+	// check for program change
+	uint8_t pgm_change[4] = { (cable_num << 4) | CIN_PGMCHANGE, MIDI_PGMCHANGE | CHANNEL, 0, 0};
 
-	// check if state has changed, ie. pedal has just been pressed or unpressed
+	// Send program change on channel in case instrument has changed, or at the very start of the program
+	if ((force_instrument) || (instrument != former_instrument)) {
+		force_instrument = false;
+		pgm_change[2] = (uint8_t) (instrument & 0x7F);
+		tud_midi_packet_write (pgm_change);
+	}
+
+	// send notes off events
+	uint8_t note_off[4] = { (cable_num << 4) | CIN_NOTEOFF, MIDI_NOTEOFF | CHANNEL, 0, 0 };
+
+	// Send Note Off at no velocity (0) on channel.
+	for (i=0; i<midi_notes_off_size; i++) {
+		note_off[2] = midi_notes_off [i];
+		note_off[3] = 0x00;
+		tud_midi_packet_write (note_off);
+	}
+
+	// send notes off events
 	uint8_t note_on[4] = { (cable_num << 4) | CIN_NOTEON, MIDI_NOTEON | CHANNEL, 0, 127 };
 
-	// Send Note On for current switch at full velocity (127) on channel.
-	note_on[2] = 0x00;
-	note_on[3] = encoder->position & 0x7F;
-	tud_midi_packet_write (note_on);
+	// Send Note On at full velocity (127) on channel.
+	for (i=0; i<midi_notes_on_size; i++) {
+		note_on[2] = midi_notes_on [i];
+		note_on[3] = 0x7F;
+		tud_midi_packet_write (note_on);
+	}
 }
 
