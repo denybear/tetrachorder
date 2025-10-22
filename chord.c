@@ -113,7 +113,7 @@ void set_3 (void *pointer) {	// major 3rd
 //                        mM     mM     1   3
 }
 
-void set_3b (void *pointer) {	// minor 3rd
+void set_b3 (void *pointer) {	// minor 3rd
 	chord_t *chord = (chord_t *)pointer;
 	chord->bitmap |= 0b000010000000000000000000;
 //                     R 2334 5 677R 9  1   1
@@ -148,7 +148,7 @@ void set_5 (void *pointer) {	// 5th
 //                        mM     mM     1   3
 }
 
-void set_5b (void *pointer) {	// flat 5th
+void set_b5 (void *pointer) {	// flat 5th
 	chord_t *chord = (chord_t *)pointer;
 	chord->bitmap |= 0b000000100000000000000000;
 //                     R 2334 5 677R 9  1   1
@@ -169,7 +169,7 @@ void set_7 (void *pointer) {	// major 7th
 //                        mM     mM     1   3
 }
 
-void set_7b (void *pointer) {	// flat 7th
+void set_b7 (void *pointer) {	// flat 7th
 	chord_t *chord = (chord_t *)pointer;
 	chord->bitmap |= 0b000000000010000000000000;
 //                     R 2334 5 677R 9  1   1
@@ -209,7 +209,7 @@ void set_11 (void *pointer) {	// 11th
 // ie. the chord is played in a way that all the notes of the chord are contained within a range of 12 notes, this range being configurable. Same for bass.
 // voicing and voicing_bass correspond to the start note of the voicing in midi, that is in (0,127) range
 // function uses a pointer to result, a table of bytes. Each byte will contain midi value of one note of the chord to be played, plus bass.
-// the table of bytes "result" shall be declared outside the function. It should be at least: R + 3 + 5 + 7 + 9 + 11 + bass = 7 bytes for a full chord + bass 
+// the table of bytes "result" shall be declared outside the function. It should be at least: R + 3 + 5 + 7 + 9 + 11 + bass = 7 bytes for a full (chord + bass)
 // function returns the number of midi notes to be sent (size of result to be considered)
 int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bass) {	// result should be allocated outside the function
 
@@ -262,5 +262,27 @@ int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bas
 	result [nb++] = (uint8_t) elt;								// add midi note to the list of midi notes to be played
 
 	return nb;
+}
+
+
+// This function compares 2 lists of midi notes together (list A and B), and come out with a list of notes (res) that are in list A of midi notes but not in list B of midi notes.
+// the 2 lists should be memory-allocated outside the function; they should be at least 7 bytes
+// It returns a new list of midi notes, as well the number of elements in this list 
+int cmp_midi_notes (uint8_t *listA, int sizeA, uint8_t *listB, int sizeB, uint8_t *res) {			
+
+	int i, j, nb = 0;											// nb = number of midi notes to return
+	bool found;
+	
+	for (i=0; i<sizeA; i++) {
+		found = false;
+		for (j=0; j<sizeB; j++) {
+			if (listA [i] == listB[j]) found = true;			// we have found the same element in the 2 lists
+		}
+		if (!found) {											// we haven't found the element that is in list A in list B
+			res [nb++] = listA [i];								// add this element to the result
+		}			
+	}
+	
+	return nb;													// return number of elements which are not common to both lists
 }
 
