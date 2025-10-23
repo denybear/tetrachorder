@@ -43,6 +43,10 @@
 #include "ws2812.pio.h"			// in pico_examples git
 // keyboard parsing and chords
 #include "kdb_events.c"
+// pico i2s audio board
+#include "audio.hpp"
+#include "play.cpp"
+
 
 /*************************************/
 /* MACRO CONSTANT TYPEDEF PROTOTYPES */
@@ -55,6 +59,7 @@
 #define CIN_NOTEOFF		0x8
 #define CIN_PGMCHANGE	0xC
 #define CHANNEL			0	 // midi channel 1
+
 
 // function prototypes
 void midi_task();
@@ -215,15 +220,6 @@ void light_strip (uint32_t color) {
 
 
 
-/* This MIDI example sends midi note-on and note-off commands at press of a switch.
- * There are 5 switches on my home-made pedal; a different note is assigned to each
- * - Linux (Ubuntu): install qsynth, qjackctl. Then connect TinyUSB output port to FLUID Synth input port
- * - Windows: install MIDI-OX
- * - MacOS: SimpleSynth
- */
-
-
-
 /*------------- MAIN -------------*/
 int main(void)
 {
@@ -240,6 +236,7 @@ int main(void)
 
 	// Globals init
 	chord = create_chord ();		// current chord to be played
+
 
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
@@ -266,6 +263,11 @@ int main(void)
 	//ws2812_program_init (pio, sm, offset, LED_PIN, 800000, false);
 	// End of NeoPixel inits
 
+
+	// configure audio
+	struct audio_buffer_pool *ap = init_audio(synth::sample_rate, PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK);
+
+
 	// main
 	while (true) {
 		// Poll the keypad
@@ -283,9 +285,13 @@ int main(void)
 		// determine lists of notes which should be on / off
 		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, midi_notes_on);
 		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size, midi_notes_off);
+/*****HERE: there could be some common notes also, and we don't want to touch those, we want them to keep on playing */
 
-		tud_task(); 		// tinyusb device task
-		midi_task();		// manage midi tasks, send notes, send program select
+
+		tud_task(); 												// tinyusb device task
+		midi_task();												// manage midi tasks, send notes, send program select
+		if (former_instrument != instrument) instrument_task ();	// load new instrument if required
+		song_task ();												// send to pico audio i2s board
 
 		// make new chord & instrument become former chord & instrument
 		former_instrument = instrument;
@@ -319,6 +325,9 @@ int main(void)
 		// end of management of neopixel led strip	
 */
 
+
+    	// update audio buffer : make sure we do this regularly (in while loop)
+	   	update_buffer(ap, get_audio_frame);
 	}
 }
 
