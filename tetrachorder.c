@@ -73,6 +73,8 @@ uint8_t midi_notes [10];				// buffer containing the midi notes of the current c
 int midi_notes_size;
 uint8_t former_midi_notes [10];			// buffer containing the midi notes of the former chord
 int former_midi_notes_size = 0;
+uint8_t midi_notes_common [10];			// buffer for midi notes that are common between former and new chord
+int midi_notes_common_size;
 uint8_t midi_notes_on [10];				// buffer for midi note_on to be played
 int midi_notes_on_size;
 uint8_t midi_notes_off [10];			// buffer for midi note_off to be played
@@ -266,6 +268,7 @@ int main(void)
 
 	// configure audio
 	struct audio_buffer_pool *ap = init_audio(synth::sample_rate, PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK);
+	reset_playback_all ();			// at start, stop all audio channels and set all channels to inactive
 
 
 	// main
@@ -282,11 +285,10 @@ int main(void)
 		if (no_bass) reset_bass (chord);				// remove bass note in case we don't want to play it
 		// midi_notes that are contained in the chord
 		midi_notes_size = get_midi_notes (midi_notes, chord, voicing, voicing_bass);
-		// determine lists of notes which should be on / off
-		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, midi_notes_on);
-		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size, midi_notes_off);
-/*****HERE: there could be some common notes also, and we don't want to touch those, we want them to keep on playing */
-
+		// determine lists of notes which should be on / off, and list of notes that are common
+		midi_notes_common_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, true, midi_notes_common);
+		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, false, midi_notes_on);
+		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size,  false, midi_notes_off);
 
 		tud_task(); 												// tinyusb device task
 		midi_task();												// manage midi tasks, send notes, send program select

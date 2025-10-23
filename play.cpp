@@ -79,41 +79,44 @@ const uint32_t instruments[NB_INSTRUMENTS][7] = {
 };
 
 
-// plays the notes contained in songstep structure
-void update_playback (struct songstep* step) {
-
-int i;
+// plays a note on a channel 
+void update_playback (int chan, uint8_t note) {
 
 	// get notes data from the structure, and pass it to synthetizer
-	for (i = 0; i < step->number_of_channels; i++) {
-		channels[i].frequency = step->notes [i];
-		channels[i].trigger_attack();
+	channels[chan].midi_note = note;
+	channels[chan].frequency = (uint16_t) roundf (frequencies [note]);
+	channels[chan].trigger_attack();
+}
+
+
+// release an active channel
+void stop_playback (int chan) {
+
+	// we must update the playback with release on a channel
+
+	// if channel is in OFF state, then do nothing
+	// if channel is already in release state, then do nothing
+	// if channel is in another state, then go to release state
+	if ((channels[chan].adsr_phase != ADSRPhase::OFF) && (channels[chan].adsr_phase != ADSRPhase::RELEASE)) {
+		channels[chan].trigger_release();
 	}
 }
 
 
-// release all active channels for a song
-void stop_playback () {
+// shut down a channel
+void reset_playback (int chan) {
 
-  // we must update the playback with release on all channels
-
-	for (uint8_t i = 0; i < CHANNEL_COUNT; i++) {
-    	// if channel is in OFF state, then do nothing
-    	// if channel is already in release state, then do nothing
-    	// if channel is in another state, then go to release state
-    	if ((channels[i].adsr_phase != ADSRPhase::OFF) && (channels[i].adsr_phase != ADSRPhase::RELEASE)) {
-			channels[i].trigger_release();
-		}
-	}
+	// we must stop a channel
+	channels[chan].off ();		// shut down channel and set it as inactive
 }
 
 
 // shut down all the channels
-void reset_playback () {
+void reset_playback_all () {
 
 	// we must stop all channels
 	for (uint8_t i = 0; i < CHANNEL_COUNT; i++) {
-		channels[i].off ();
+		reset_playback (i);		// shut down channel and set it as inactive
 	}
 }
 
@@ -138,15 +141,45 @@ bool load_instrument(int instr, int chan) {
 }
 
 
+// go through the notes to be played, muted, etc and set the audio channels accordingly
+// send this to synthetizer so it is playde by i2s pico audio board
 void song_task() {
-	// go through the list of notes to be kept untouched, and do nothing to the channel; put the channels as active, set to a note
-	// go through the list of midi notes off, and stop corresponding channel, put the channel as inactive;
-	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
-	// how to assign channels to notes? We have a table of active / inactive channels, and the midi note corresponding to each active channel
-	// Beware: we should recalculate the chord if voicing changes (this should be done already, in theory)
-	// From a sound perspective, should we adapt the master volume to the number of channels? Or assume same fixed volume for each channel, and master is just the sum of the
-	// individual channels?
 
+	int i, j;
+	
+	// go through the list of notes to be kept untouched, and do nothing to the channel
+	for (i=0; i < midi_notes_common_size; i++) {
+		for (j = 0; j < CHANNEL_COUNT; j++) {
+			if (channels[j].midi_note == midi_notes_common[i]);		// do nothing
+		}
+	}
+
+	// go through the list of midi notes off, and stop corresponding channel, put the channel as inactive;
+	for (i=0; i < midi_notes_off_size; i++) {
+		for (j = 0; j < CHANNEL_COUNT; j++) {
+			if (channels[j].midi_note == midi_notes_off[i]) {
+				// stop channel, set inactive
+				stop_playback (j);
+				// channels[j].off();
+			}
+		}
+	}
+
+	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
+	for (i=0; i < midi_notes_on_size; i++) {
+		for (j = 0; j < CHANNEL_COUNT; j++) {
+			if (channels[j].active == false) {
+				// empty channel: let's use it and play!			
+				update_playback (j, midi_notes_on[i]);
+			}
+		}
+	}
+
+	// BEWARE, but it should not happen:
+	// 1- We should recalculate the chord if voicing changes (this should be done already, in theory)
+	// 2- From a sound perspective, should we adapt the master volume to the number of channels? Or assume same fixed volume for each channel, and master is just the sum of the
+	// individual channels? --> master volume applies to all channels (sum of individual channels, as seen in synth.cpp);
+	// this ensures volume stays the same regardless the number of active playing channels 
 }
 
 

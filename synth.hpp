@@ -39,7 +39,8 @@ namespace synth {
   // |X   |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |    |
   // +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+--->
 
-  #define CHANNEL_COUNT 9
+  // 7 channels midi_on (1, 3, 5, 7, 9, 11, bass) + 7 channels midi_off + 2 spare
+  #define CHANNEL_COUNT 16
 
   constexpr float pi = 3.14159265358979323846f;
 
@@ -74,9 +75,11 @@ namespace synth {
   };
 
   struct AudioChannel {
-    uint32_t  waveforms    = 0;      // bitmask for enabled waveforms (see AudioWaveform enum for values)
+    bool      active        = false;  // channel is active and playing if true
+    uint32_t  waveforms     = 0;      // bitmask for enabled waveforms (see AudioWaveform enum for values)
     uint16_t  frequency     = 660;    // frequency of the voice (Hz)
     uint16_t  volume        = 0xffff; // channel volume (default 100%)
+    uint8_t   midi_note     = 0;      // midi note played on the channel
 
     uint16_t  attack_ms     = 2;      // attack period
     uint16_t  decay_ms      = 6;      // decay period
@@ -109,29 +112,34 @@ namespace synth {
       adsr_phase = ADSRPhase::ATTACK;
       adsr_end_frame = (attack_ms * sample_rate) / 1000;
       adsr_step = (int32_t(0xffffff) - int32_t(adsr)) / int32_t(adsr_end_frame);
+      active = true;
     }
     void trigger_decay() {
       adsr_frame = 0;
       adsr_phase = ADSRPhase::DECAY;
       adsr_end_frame = (decay_ms * sample_rate) / 1000;
       adsr_step = (int32_t(sustain << 8) - int32_t(adsr)) / int32_t(adsr_end_frame);
+      active = true;
     }
     void trigger_sustain() {
       adsr_frame = 0;
       adsr_phase = ADSRPhase::SUSTAIN;
       adsr_end_frame = (sustain_ms * sample_rate) / 1000;;
       adsr_step = 0;
+      active = true;
     }
     void trigger_release() {
       adsr_frame = 0;
       adsr_phase = ADSRPhase::RELEASE;
       adsr_end_frame = (release_ms * sample_rate) / 1000;
       adsr_step = (int32_t(0) - int32_t(adsr)) / int32_t(adsr_end_frame);
+      active = true;
     }
     void off() {
       adsr_frame = 0;
       adsr_phase = ADSRPhase::OFF;
       adsr_step = 0;
+      active = false;
     }
   };
 

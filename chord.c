@@ -255,10 +255,12 @@ int get_midi_notes (uint8_t *result, void *pointer, int voicing, int voicing_bas
 }
 
 
-// This function compares 2 lists of midi notes together (list A and B), and come out with a list of notes (res) that are in list A of midi notes but not in list B of midi notes.
+// This function compares 2 lists of midi notes together (list A and B), and come out:
+// in case equal == false --> with a list of notes (res) that are in list A of midi notes but not in list B of midi notes.
+// in case equal == true --> with a list of notes (res) that are both in list A of midi notes and in list B of midi notes.
 // the 2 lists should be memory-allocated outside the function; they should be at least 7 bytes
 // It returns a new list of midi notes, as well the number of elements in this list 
-int cmp_midi_notes (uint8_t *listA, int sizeA, uint8_t *listB, int sizeB, uint8_t *res) {			
+int cmp_midi_notes (uint8_t *listA, int sizeA, uint8_t *listB, int sizeB, bool equal, uint8_t *res) {
 
 	int i, j, nb = 0;											// nb = number of midi notes to return
 	bool found;
@@ -268,11 +270,19 @@ int cmp_midi_notes (uint8_t *listA, int sizeA, uint8_t *listB, int sizeB, uint8_
 		for (j=0; j<sizeB; j++) {
 			if (listA [i] == listB[j]) found = true;			// we have found the same element in the 2 lists
 		}
-		if (!found) {											// we haven't found the element that is in list A in list B
-			res [nb++] = listA [i];								// add this element to the result
+		if (equal) {
+			if (found) {											// we have found the element that is in list A in list B
+				res [nb++] = listA [i];								// add this element to the result
+			}
+		}
+		else {
+			if (!found) {											// we haven't found the element that is in list A in list B
+				res [nb++] = listA [i];								// add this element to the result
+			}
 		}			
 	}
 	
 	return nb;													// return number of elements which are not common to both lists
 }
+
 
