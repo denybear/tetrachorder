@@ -93,13 +93,15 @@ uint8_t parse_keyboard (void *pointer, bool *kbd) {
 	reset_rootnote (chord);			// start with empty chord and bass
 
 	// analyse instrument, and return it as a byte
-	int i;
-	bool *pt = &sw0;
 	uint8_t instrument = 0;
-	for (i=0; i<8; i++) {
-		instrument = instrument << 1;
-		if (pt [i] == true) instrument |= 1;
-	}
+	instrument = sw0 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw1 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw2 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw3 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw4 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw5 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw6 ? ((instrument | 1)<< 1) : (instrument << 1);
+	instrument = sw7 ? ((instrument | 1) : instrument;
 
 	// analyse chromatic keyboard (we don't check for errors, we assume the code is correct)
 	if (C) build_full_chord (1, chord);
