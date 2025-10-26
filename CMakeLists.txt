@@ -38,11 +38,16 @@ project(tetrachorder C CXX ASM)
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
-add_executable(tetrachorder tetrachorder.c usb_descriptors.c
-    audio.hpp
-    synth.cpp
-    synth.hpp
-)
+add_executable(tetrachorder tetrachorder.c
+    usb_descriptors.c
+    encoder_button.c
+    keypad.c
+    kbd_events.c
+    audio.c
+    synth.c
+    chord.c
+    play.c
+    )
 
 pico_set_program_name(tetrachorder "tetrachorder")
 pico_set_program_version(tetrachorder "0.1")

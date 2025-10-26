@@ -1,3 +1,13 @@
+// TO DO
+// push dans github, puis virer les fichiers inutiles
+// refactor PICOUI with .h, new button + encoder module, etc
+// audio.h à refaire (ou mettre à jour avec les vraies libraries)
+// regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
+// rajouter des instruments, synth.c à revoir
+
+
+
+
 /*
  * The MIT License (MIT)
  *
@@ -29,28 +39,33 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/pio.h"
+
+// project-wide includes
+#include "tetrachorder.h"		// global variables init
+
 // USB midi device
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "tusb_config.h"
 // rotary encoder + button
-#include "encoder.c"
-#include "button.c"
+#include "encoder_button.h"
 // matrix keypad
-#include "keypad.c"
 #include "keypad.h"
 // neopixel LEDs
 #include "ws2812.pio.h"			// in pico_examples git
 // keyboard parsing and chords
-#include "kdb_events.c"
+#include "kbd_events.h"
 // pico i2s audio board
-#include "audio.hpp"
-#include "play.cpp"
+#include "audio.h"
+#include "synth.h"
+#include "chord.h"
+#include "play.h"
 
 
-/*************************************/
-/* MACRO CONSTANT TYPEDEF PROTOTYPES */
-/*************************************/
+/**************************/
+/* Define local constants */
+/**************************/
+
 // MIDI constants
 #define MIDI_NOTEON		0x90
 #define MIDI_NOTEOFF	0x80
@@ -61,31 +76,11 @@
 #define CHANNEL			0	 // midi channel 1
 
 
-// function prototypes
+/***********************/
+/* Midi USB prototypes */
+/***********************/
+
 void midi_task();
-
-
-/******************************/
-/* Init main global variables */
-/******************************/
-chord_t *chord;							// current chord to be played
-uint8_t midi_notes [10];				// buffer containing the midi notes of the current chord
-int midi_notes_size;
-uint8_t former_midi_notes [10];			// buffer containing the midi notes of the former chord
-int former_midi_notes_size = 0;
-uint8_t midi_notes_common [10];			// buffer for midi notes that are common between former and new chord
-int midi_notes_common_size;
-uint8_t midi_notes_on [10];				// buffer for midi note_on to be played
-int midi_notes_on_size;
-uint8_t midi_notes_off [10];			// buffer for midi note_off to be played
-int midi_notes_off_size;
-uint8_t former_instrument = 0;			// number of instrument selected
-uint8_t instrument;						// number of instrument selected
-bool force_instrument = true;			// force sending program change at start of the program
-int voicing = 60;						// C3: voicing for the chord
-int voicing_bass = 36;					// C1: voicing for the bass
-bool no_bass = false;					// true if we should play no bass
-bool is_bass_voicing = false;			// true if encoder drives bass voicing, else encoder drives regular chord voicing
 
 
 /*************************************/
@@ -239,17 +234,16 @@ int main(void)
 	// Globals init
 	chord = create_chord ();		// current chord to be played
 
-
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
 	printf("Rotary Encoder created and it's state is %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
 	printf("Rotary Encoder created and it's position is %d\n", encoder->position);
-	button_t *button = create_button(4, onpress);
+	button_t *button = create_button(4, onpress);						// GPIO to be changed here
 	printf("Button created and it's state is %d\n", button->state);
-
 	
 	// Matrix keyboard inits
 	// Apply the keypad configuration defined earlier and declare the number of columns and rows
+	printf ("keypad init\n");
 	keypad_init(&keypad, cols, rows, 1, 2);
 	// Assign the callbacks for each event
 	keypad_on_press(&keypad, key_pressed);
@@ -267,8 +261,11 @@ int main(void)
 
 
 	// configure audio
-	struct audio_buffer_pool *ap = init_audio(synth::sample_rate, PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK);
-	reset_playback_all ();			// at start, stop all audio channels and set all channels to inactive
+	struct audio_buffer_pool *ap = init_audio(PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK, 0, 0);
+	set_audio_rate_and_volume (SAMPLE_RATE, VOLUME);	// set audio rate & volume at synthetizer level
+	instrument = 0;
+	instrument_task ();									// create and initialize all audio channels by loading new instrument
+	reset_playback_all ();								// at start, stop all audio channels and set all channels to inactive
 
 
 	// main

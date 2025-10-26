@@ -5,11 +5,9 @@
 #include "pico/binary_info.h"
 
 #include "globals.h"
-#include "synth.hpp"
-#include "synth.cpp"
-#include "audio.hpp"
-#include "play.hpp"
-
+#include "audio.h"
+#include "synth.h"
+#include "play.h"
 
 /*************************************/
 /* MACRO CONSTANT TYPEDEF PROTOTYPES */
@@ -34,18 +32,10 @@ const float frequencies[] = {
     8372.018, 8869.844, 9397.273, 9956.063, 10548.080, 11175.300, 11839.820, 12543.850
 };
 
-#define PICO_AUDIO_PACK_I2S_DATA 9
-#define PICO_AUDIO_PACK_I2S_BCLK 10
-#define NB_INSTRUMENTS 11
-
 
 /**********************************/
 /* Pico audio i2s board functions */
 /**********************************/
-
-// channels definition
-using namespace synth;
-synth::AudioChannel synth::channels[CHANNEL_COUNT];
 
 // 0: piano
 // 1: piano2
@@ -62,23 +52,17 @@ synth::AudioChannel synth::channels[CHANNEL_COUNT];
 // waveform, attack in ms, decay in ms, sustain volume (0xafff = 70% of max volume), sustain in ms,
 // release in ms, channel volume (set at 10000 to avoid saturation; it can be up to 0xffff)
 const uint32_t instruments[NB_INSTRUMENTS][7] = {
-	Waveform::PIANO, 30, 20, 0xafff, 2000, 1000, 10000,
-	Waveform::PIANO2, 30, 20, 0xafff, 2000, 1000, 10000,
-	Waveform::REED, 30, 20, 0xafff, 2000, 1000, 10000,
-	Waveform::GUITAR, 10, 10, 0xafff, 1000, 500, 10000,
-	Waveform::PLUCKEDGUITAR, 10, 10, 0xafff, 1000, 500, 10000,
-	Waveform::SQUARE, 10, 10, 0xafff, 1000, 500, 5000,
-	Waveform::VIOLIN, 50, 200, 0xafff, 500, 5000, 10000,
-	Waveform::HORN, 120, 50, 0xafff, 2000, 100, 10000,
-	Waveform::OBOE, 120, 50, 0xafff, 2000, 100, 10000,
-	Waveform::CLARINETTE, 120, 50, 0xafff, 2000, 100, 10000,
-	Waveform::FLUTE, 120, 50, 0xafff, 2000, 100, 10000	
-
-//	Waveform::TRIANGLE | Waveform::SQUARE, 16, 168, 0xafff, 10000, 168, 10000,		//melody
-//	Waveform::SINE | Waveform::SQUARE, 38, 300, 0, 0, 0, 12000,						//rhythm
-//	Waveform::NOISE, 5, 10, 16000, 10000, 100, 18000,								//drum
-//	Waveform::NOISE, 5, 5, 8000, 10000, 40, 8000,									//hihat
-//	Waveform::SQUARE, 10, 100, 0, 0, 500, 12000,									//bass
+	PIANO, 30, 20, 0xafff, 2000, 1000, 10000,
+	PIANO2, 30, 20, 0xafff, 2000, 1000, 10000,
+	REED, 30, 20, 0xafff, 2000, 1000, 10000,
+	GUITAR, 10, 10, 0xafff, 1000, 500, 10000,
+	PLUCKEDGUITAR, 10, 10, 0xafff, 1000, 500, 10000,
+	SQUARE, 10, 10, 0xafff, 1000, 500, 5000,
+	VIOLIN, 50, 200, 0xafff, 500, 5000, 10000,
+	HORN, 120, 50, 0xafff, 2000, 100, 10000,
+	OBOE, 120, 50, 0xafff, 2000, 100, 10000,
+	CLARINETTE, 120, 50, 0xafff, 2000, 100, 10000,
+	FLUTE, 120, 50, 0xafff, 2000, 100, 10000
 };
 
 
@@ -88,7 +72,7 @@ void update_playback (int chan, uint8_t note) {
 	// get notes data from the structure, and pass it to synthetizer
 	channels[chan].midi_note = note;
 	channels[chan].frequency = (uint16_t) roundf (frequencies [note]);
-	channels[chan].trigger_attack();
+	trigger_attack (&channels[chan]);
 }
 
 
@@ -100,8 +84,8 @@ void stop_playback (int chan) {
 	// if channel is in OFF state, then do nothing
 	// if channel is already in release state, then do nothing
 	// if channel is in another state, then go to release state
-	if ((channels[chan].adsr_phase != ADSRPhase::OFF) && (channels[chan].adsr_phase != ADSRPhase::RELEASE)) {
-		channels[chan].trigger_release();
+	if ((channels[chan].adsr_phase != ADSR_OFF) && (channels[chan].adsr_phase != ADSR_RELEASE)) {
+		trigger_release (&channels[chan]);
 	}
 }
 
@@ -110,7 +94,7 @@ void stop_playback (int chan) {
 void reset_playback (int chan) {
 
 	// we must stop a channel
-	channels[chan].off ();		// shut down channel and set it as inactive
+	off (&channels[chan]);	// shut down channel and set it as inactive
 }
 
 
@@ -118,7 +102,7 @@ void reset_playback (int chan) {
 void reset_playback_all () {
 
 	// we must stop all channels
-	for (uint8_t i = 0; i < CHANNEL_COUNT; i++) {
+	for (int i = 0; i < CHANNEL_COUNT; i++) {
 		reset_playback (i);		// shut down channel and set it as inactive
 	}
 }
@@ -159,9 +143,11 @@ void song_task() {
 
 	// go through the list of midi notes off, and stop corresponding channel, put the channel as inactive;
 	for (i=0; i < midi_notes_off_size; i++) {
+//printf ("number of note off: %d\n", midi_notes_off_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].midi_note == midi_notes_off[i]) {
 				// stop channel, set inactive
+//printf ("channel:%d, midi note off: %d\n", j, midi_notes_off[i]);
 				stop_playback (j);
 				// channels[j].off();
 			}
@@ -170,10 +156,13 @@ void song_task() {
 
 	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
 	for (i=0; i < midi_notes_on_size; i++) {
+//printf ("number of note on: %d\n", midi_notes_on_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].active == false) {
-				// empty channel: let's use it and play!			
+				// empty channel: let's use it and play!
+//printf ("channel:%d, midi note on: %d\n", j, midi_notes_on[i]);			
 				update_playback (j, midi_notes_on[i]);
+				break;			// assign note to a single channel, then move to next note
 			}
 		}
 	}

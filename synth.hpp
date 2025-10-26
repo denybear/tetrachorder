@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cstdint>
+//#include <cstdint>
+#include "pico/stdlib.h"
 
 namespace synth {
 

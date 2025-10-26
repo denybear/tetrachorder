@@ -1,3 +1,5 @@
+#include "pico/stdlib.h"
+#include "audio.hpp"
 #include "synth.hpp"
 
 namespace synth {

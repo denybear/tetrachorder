@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "pico/stdlib.h"
-#include "chord.c"
+
+#include "globals.h"
 #include "keypad.h"
+#include "chord.h"
+#include "kbd_events.h"
 
 
 /********************************************************/
@@ -101,7 +104,7 @@ uint8_t parse_keyboard (void *pointer, bool *kbd) {
 	instrument = sw4 ? ((instrument | 1)<< 1) : (instrument << 1);
 	instrument = sw5 ? ((instrument | 1)<< 1) : (instrument << 1);
 	instrument = sw6 ? ((instrument | 1)<< 1) : (instrument << 1);
-	instrument = sw7 ? ((instrument | 1) : instrument;
+	instrument = sw7 ? (instrument | 1) : instrument;
 
 	// analyse chromatic keyboard (we don't check for errors, we assume the code is correct)
 	if (C) build_full_chord (1, chord);

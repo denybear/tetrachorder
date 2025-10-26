@@ -2,15 +2,9 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 
-/***********************************/
-/* definition of a chord structure */
-/***********************************/
+#include "globals.h"
+#include "chord.h"
 
-typedef struct chord_t {
-	uint32_t bitmap;
-	uint8_t rootnote;
-	uint8_t bass;
-} chord_t;
 
 /*************/
 /* Functions */
