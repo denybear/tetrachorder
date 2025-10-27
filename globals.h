@@ -14,16 +14,17 @@
 /************************************/
 
 extern AudioChannel channels[CHANNEL_COUNT];	// audio channels
+//extern chord_t *chord [12];						// current chords to be played; let's assume 12 chords as we have 12 keys on chromatic keyboard
 extern chord_t *chord;							// current chord to be played
-extern uint8_t midi_notes [10];					// buffer containing the midi notes of the current chord
+extern uint8_t midi_notes [256];				// buffer containing the midi notes of the current chord
 extern int midi_notes_size;
-extern uint8_t former_midi_notes [10];			// buffer containing the midi notes of the former chord
+extern uint8_t former_midi_notes [256];			// buffer containing the midi notes of the former chord
 extern int former_midi_notes_size;
-extern uint8_t midi_notes_common [10];			// buffer for midi notes that are common between former and new chord
+extern uint8_t midi_notes_common [256];			// buffer for midi notes that are common between former and new chord
 extern int midi_notes_common_size;
-extern uint8_t midi_notes_on [10];				// buffer for midi note_on to be played
+extern uint8_t midi_notes_on [256];				// buffer for midi note_on to be played
 extern int midi_notes_on_size;
-extern uint8_t midi_notes_off [10];				// buffer for midi note_off to be played
+extern uint8_t midi_notes_off [256];			// buffer for midi note_off to be played
 extern int midi_notes_off_size;
 extern uint8_t former_instrument;				// number of instrument selected
 extern uint8_t instrument;						// number of instrument selected

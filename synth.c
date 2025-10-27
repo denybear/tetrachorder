@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "gpio-interrupt.c"
 
 #include "globals.h"
 #include "synth.h"

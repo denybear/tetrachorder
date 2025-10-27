@@ -60,7 +60,7 @@ pico_enable_stdio_usb(tetrachorder 0)
 target_compile_definitions(tetrachorder PRIVATE
 	USE_AUDIO_I2S=1
 	PICO_AUDIO_I2S_MONO_INPUT=1
-)
+    )
 
 # Add the standard library to the build
 target_link_libraries(tetrachorder

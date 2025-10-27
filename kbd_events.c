@@ -41,7 +41,7 @@
 bool build_full_chord (uint8_t root, void *pointer) {
 
 	chord_t *chord = (chord_t *)pointer;
-
+printf ("build full chord: %d\n", root);
 	if (set_rootnote (root, chord) == false) return false;
 	set_b3 (chord);
 	set_5 (chord);
@@ -56,7 +56,7 @@ bool build_full_chord (uint8_t root, void *pointer) {
 // kbd is a pointer to an array of bools; this array indicates whether the key is pressed or not
 // this allows to have an instant photograph of the keyboard at regular times, and use this to build chord
 // as inputs, it uses pointer to chord (which will be populated based on which key is pressed) and pointer to keyboard array (gotten from bool* keypad_read() function)
-// it returns the pointer to chord fully populated, as well as instrument number
+// it returns the pointer to chord array fully populated, as well as instrument number
 uint8_t parse_keyboard (void *pointer, bool *kbd) {
 
 	chord_t *chord = (chord_t *)pointer;

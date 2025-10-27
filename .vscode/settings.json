@@ -43,6 +43,8 @@
         "board_api.h": "c",
         "stdlib.h": "c",
         "cstdint": "cpp",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "audio_i2s.h": "c",
+        "clocks.h": "c"
     }
 }

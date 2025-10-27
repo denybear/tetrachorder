@@ -1,9 +1,12 @@
 // TO DO
-// push dans github, puis virer les fichiers inutiles
-// refactor PICOUI with .h, new button + encoder module, etc
-// audio.h à refaire (ou mettre à jour avec les vraies libraries)
+// X push dans github, puis virer les fichiers inutiles
+// X refactor PICOUI with .h, new button + encoder module, etc
+// X audio.h à refaire (ou mettre à jour avec les vraies libraries)
 // regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
+// tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
+// faire fonctionner le synthetizer sur le core 1
 // rajouter des instruments, synth.c à revoir
+//
 
 
 
@@ -36,6 +39,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/pio.h"
@@ -90,12 +94,12 @@ void midi_task();
 /**
  * @brief Define the keypad matrix column GPIOs
  */
-const uint8_t cols[] = {5};
+const uint8_t cols[] = {6, 7};
 
 /**
  * @brief Define the keypad matrix row GPIOs
  */
-const uint8_t rows[] = {6, 7};
+const uint8_t rows[] = {5};
 
 /**
  * @brief Create the keypad matrix structure
@@ -213,8 +217,7 @@ void light_strip (uint32_t color) {
 */
 
 /* End of neopixel part
- */
-
+*/
 
 
 /*------------- MAIN -------------*/
@@ -232,7 +235,8 @@ int main(void)
 	}
 
 	// Globals init
-	chord = create_chord ();		// current chord to be played
+//for (int i=0; i<12;i++) chord [i] = create_chord ();		// current chord to be played
+	chord = create_chord ();								// current chord to be played
 
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
@@ -244,7 +248,7 @@ int main(void)
 	// Matrix keyboard inits
 	// Apply the keypad configuration defined earlier and declare the number of columns and rows
 	printf ("keypad init\n");
-	keypad_init(&keypad, cols, rows, 1, 2);
+	keypad_init(&keypad, cols, rows, 2, 1);
 	// Assign the callbacks for each event
 	keypad_on_press(&keypad, key_pressed);
 	keypad_on_release(&keypad, key_released);
@@ -260,8 +264,9 @@ int main(void)
 	// End of NeoPixel inits
 
 
+
 	// configure audio
-	struct audio_buffer_pool *ap = init_audio(PICO_AUDIO_PACK_I2S_DATA, PICO_AUDIO_PACK_I2S_BCLK, 0, 0);
+	struct audio_buffer_pool *ap = init_audio();
 	set_audio_rate_and_volume (SAMPLE_RATE, VOLUME);	// set audio rate & volume at synthetizer level
 	instrument = 0;
 	instrument_task ();									// create and initialize all audio channels by loading new instrument
@@ -275,26 +280,52 @@ int main(void)
 		/* Alternatively, the output of keypad_read() can
 		be stored as a pointer to the array containing
 		the state of each key: */
+//*****HERE
+// ici 2 écoles s'affrontent
+// ceux qui lisent les clavier touche à touche, et qui adaptent l'accord en fonction des touches appuyées
+// ou ceux qui lisent tout le clavier en entier, et en déduisent les accords
+// on va faire ça, mais cela veut dire qu'il faut un tableau de 12 accords, au cas où les 12 touches du clavier sont appuyées en même temps
+// en ayant 1 seul chord, alors c'est la dernière touche du clavier analysée qui devient l'accord
+//
+// autre méthode: on lit l'ensemble des touches pour les extensions d'accord, et on utilise les callback pour fixer
+// l'accord chromatique qui a été le dernier a être composé... c'est comme ça qu'on va faire
+
 		bool *pressed = keypad_read (&keypad);
 		sleep_ms(5);
 
-		instrument = parse_keyboard (chord, pressed);	// analyse key presses to get which chord has been selected
+		instrument = parse_keyboard (chord, pressed);	// analyse key presses to get which chords has been selected
 		if (no_bass) reset_bass (chord);				// remove bass note in case we don't want to play it
 		// midi_notes that are contained in the chord
 		midi_notes_size = get_midi_notes (midi_notes, chord, voicing, voicing_bass);
 		// determine lists of notes which should be on / off, and list of notes that are common
 		midi_notes_common_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, true, midi_notes_common);
+
+if (midi_notes_common_size !=0){
+printf ("common notes:%d  -  , note:", midi_notes_common_size);
+for (int i=0; i< 10; i++) printf ("%d ", midi_notes_common[i]);
+printf ("\n\n");
+}
 		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, false, midi_notes_on);
+if (midi_notes_on_size !=0){
+printf ("on notes:%d  -  , note:", midi_notes_on_size);
+for (int i=0; i< 10; i++) printf ("%d ", midi_notes_on[i]);
+printf ("\n\n");
+}
 		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size,  false, midi_notes_off);
+if (midi_notes_off_size !=0){
+printf ("off notes:%d  -  , note:", midi_notes_off_size);
+for (int i=0; i< 10; i++) printf ("%d ", midi_notes_off[i]);
+printf ("\n\n");
+}
 
 		tud_task(); 												// tinyusb device task
 		midi_task();												// manage midi tasks, send notes, send program select
+
 		if (former_instrument != instrument) instrument_task ();	// load new instrument if required
 		song_task ();												// send to pico audio i2s board
 
 		// make new chord & instrument become former chord & instrument
 		former_instrument = instrument;
-/*****HERE: there could be an issue; former midi notes should contain more than this? */
 		memcpy (former_midi_notes, midi_notes, midi_notes_size);
 		former_midi_notes_size = midi_notes_size;
 
