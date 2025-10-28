@@ -240,7 +240,6 @@ void trigger_attack(AudioChannel* channel)  {
 	channel->waveform_offset = 0;
     channel->adsr_frame = 0;
     channel->adsr_phase = ADSR_ATTACK;
-//printf ("note: %d, frequency:%d\n", channel->midi_note, channel->frequency);
     channel->adsr_end_frame = (channel->attack_ms * sample_rate) / 1000;
     channel->adsr_step = ((int32_t)(0xffffff) - (int32_t)(channel->adsr)) / (int32_t)(channel->adsr_end_frame);
     channel->active = true;

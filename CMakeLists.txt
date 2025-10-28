@@ -69,6 +69,7 @@ target_link_libraries(tetrachorder
         tinyusb_device
         tinyusb_board
         pico_audio_i2s
+        pico_multicore
         )
 
 # Add the standard include files to the build

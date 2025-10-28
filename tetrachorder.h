@@ -2,12 +2,22 @@
 #define TETRACHORDER_H
 
 #include "pico/stdlib.h"
+#include "pico/util/queue.h"
 #include "synth.h"
 #include "chord.h"
 
 /****************************************************/
 /* Define GLOBALS MACRO CONSTANT TYPEDEF PROTOTYPES */
 /****************************************************/
+// MIDI constants
+#define MIDI_NOTEON		0x90
+#define MIDI_NOTEOFF	0x80
+#define MIDI_PGMCHANGE	0xC0
+#define CIN_NOTEON		0x9
+#define CIN_NOTEOFF		0x8
+#define CIN_PGMCHANGE	0xC
+#define CHANNEL			0	 // midi channel 1
+
 
 /***************************/
 /* Define global variables */
@@ -15,6 +25,7 @@
 
 // Init main global variables
 
+queue_t synth_queue;					// define communication queue between UI and synth
 AudioChannel channels[CHANNEL_COUNT];	// audio channels
 //chord_t *chord [12];					// current chords to be played; let's assume 12 chords as we have 12 keys on chromatic keyboard
 chord_t *chord;							// current chord to be played

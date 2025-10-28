@@ -144,11 +144,9 @@ void song_task() {
 
 	// go through the list of midi notes off, and stop corresponding channel, put the channel as inactive;
 	for (i=0; i < midi_notes_off_size; i++) {
-printf ("number of note off: %d\n", midi_notes_off_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].midi_note == midi_notes_off[i]) {
 				// stop channel, set inactive
-printf ("channel:%d, midi note off: %d\n", j, midi_notes_off[i]);
 				stop_playback (j);
 				// channels[j].off();
 			}
@@ -157,27 +155,69 @@ printf ("channel:%d, midi note off: %d\n", j, midi_notes_off[i]);
 
 	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
 	for (i=0; i < midi_notes_on_size; i++) {
-printf ("number of note on: %d\n", midi_notes_on_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].active == false) {
-				// empty channel: let's use it and play!
-printf ("channel:%d, midi note on: %d\n", j, midi_notes_on[i]);			
+				// empty channel: let's use it and play!	
 				update_playback (j, midi_notes_on[i]);
 				break;			// assign note to a single channel, then move to next note
 			}
 		}
 	}
-
-	// BEWARE, but it should not happen:
-	// 1- We should recalculate the chord if voicing changes (this should be done already, in theory)
-	// 2- From a sound perspective, should we adapt the master volume to the number of channels? Or assume same fixed volume for each channel, and master is just the sum of the
-	// individual channels? --> master volume applies to all channels (sum of individual channels, as seen in synth.cpp);
-	// this ensures volume stays the same regardless the number of active playing channels 
 }
 
 
-void instrument_task() {
+void instrument_task(int instr) {
 	int i;
 	
-	for (i = 0; i < CHANNEL_COUNT; i++) load_instrument (instrument, i);	// we load the same instrument for all the channels
+	for (i = 0; i < CHANNEL_COUNT; i++) load_instrument (instr, i);		// we load the same instrument for all the channels
+}
+
+
+void core1_main() {		//The program running on core 1
+
+	uint32_t data;
+	uint8_t *midi;
+	int i,j;
+
+	// configure audio
+	struct audio_buffer_pool *ap = init_audio();
+	set_audio_rate_and_volume (SAMPLE_RATE, VOLUME);	// set audio rate & volume at synthetizer level
+	reset_playback_all ();								// at start, stop all audio channels and set all channels to inactive
+
+	while (true) {
+		if (queue_try_remove(&synth_queue, &data)) {
+			// Perform processing here
+			midi = (uint8_t *) &data;		// read 32-bit data as 4 bytes of 8-bit
+
+			// analyse midi data and play accordingly
+			switch (midi[1] & 0xF0) {
+				case MIDI_PGMCHANGE:
+					instrument_task (midi[2]);
+				break;
+				case MIDI_NOTEOFF:
+					for (i = 0; i < CHANNEL_COUNT; i++) {
+						if (channels[i].midi_note == midi[2]) {
+							// stop channel, set inactive
+							stop_playback (i);
+						}
+					}
+				break;
+				case MIDI_NOTEON:
+					for (i = 0; i < CHANNEL_COUNT; i++) {
+						if (channels[i].active == false) {
+							// empty channel: let's use it and play!
+							update_playback (i, midi[2]);
+							break;			// assign note to a single channel, then move to next note
+						}
+					}
+				break;
+			}
+		}
+		else {
+            // printf("Queue is empty.\n");
+		}
+
+		// update audio buffer : make sure we do this regularly (in while loop)
+	   	update_buffer(ap, get_audio_frame);
+	}
 }

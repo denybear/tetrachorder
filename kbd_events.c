@@ -41,7 +41,7 @@
 bool build_full_chord (uint8_t root, void *pointer) {
 
 	chord_t *chord = (chord_t *)pointer;
-printf ("build full chord: %d\n", root);
+
 	if (set_rootnote (root, chord) == false) return false;
 	set_b3 (chord);
 	set_5 (chord);

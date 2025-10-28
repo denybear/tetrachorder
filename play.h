@@ -11,6 +11,7 @@ void reset_playback (int);
 void reset_playback_all ();
 bool load_instrument(int, int);
 void song_task();
-void instrument_task();
+void instrument_task(int);
+void core1_main();
 
 #endif

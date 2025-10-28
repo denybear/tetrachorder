@@ -4,9 +4,14 @@
 // X audio.h à refaire (ou mettre à jour avec les vraies libraries)
 // regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
 // tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
-// faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
+// X faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
 // rajouter des instruments, synth.c à revoir
 //
+// BEWARE, but it should not happen:
+// 1- We should recalculate the chord if voicing changes (this should be done already, in theory)
+// 2- From a sound perspective, should we adapt the master volume to the number of channels? Or assume same fixed volume for each channel, and master is just the sum of the
+// individual channels? --> master volume applies to all channels (sum of individual channels, as seen in synth.cpp);
+// this ensures volume stays the same regardless the number of active playing channels 
 
 
 
@@ -43,6 +48,8 @@
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
 #include "hardware/pio.h"
+#include "pico/multicore.h"
+#include "pico/util/queue.h"
 
 // project-wide includes
 #include "tetrachorder.h"		// global variables init
@@ -64,20 +71,6 @@
 #include "synth.h"
 #include "chord.h"
 #include "play.h"
-
-
-/**************************/
-/* Define local constants */
-/**************************/
-
-// MIDI constants
-#define MIDI_NOTEON		0x90
-#define MIDI_NOTEOFF	0x80
-#define MIDI_PGMCHANGE	0xC0
-#define CIN_NOTEON		0x9
-#define CIN_NOTEOFF		0x8
-#define CIN_PGMCHANGE	0xC
-#define CHANNEL			0	 // midi channel 1
 
 
 /***********************/
@@ -227,6 +220,10 @@ int main(void)
 	board_init();
 	printf("Tetrachorder\r\n");
 
+	// init multicore and queue for communication
+	queue_init(&synth_queue, sizeof(uint32_t), 256);	// Initialize a queue for 256 items of 4 bytes (uint32)
+	multicore_launch_core1 (core1_main);	// Reset core1 for synth and and enter the core1_main function
+
 	// init device stack on configured roothub port
 	tud_init(BOARD_TUD_RHPORT);
 
@@ -264,15 +261,6 @@ int main(void)
 	// End of NeoPixel inits
 
 
-
-	// configure audio
-	struct audio_buffer_pool *ap = init_audio();
-	set_audio_rate_and_volume (SAMPLE_RATE, VOLUME);	// set audio rate & volume at synthetizer level
-	instrument = 0;
-	instrument_task ();									// create and initialize all audio channels by loading new instrument
-	reset_playback_all ();								// at start, stop all audio channels and set all channels to inactive
-
-bool pressed [64];
 	// main
 	while (true) {
 		// Poll the keypad
@@ -288,7 +276,11 @@ bool pressed [64];
 // en ayant 1 seul chord, alors c'est la dernière touche du clavier analysée qui devient l'accord
 //
 // autre méthode: on lit l'ensemble des touches pour les extensions d'accord, et on utilise les callback pour fixer
-// l'accord chromatique qui a été le dernier a être composé... c'est comme ça qu'on va faire
+// l'accord chromatique qui a été le dernier a être composé... mais c'est compliqué à faire du fait de la gestion des callbacks
+// derière méthode:
+// mettre un time since boot us dans le tableau des keypress, et on utilise uniquement la dernière keypress sur le kbd chromatique,
+// c'est à dire le time since boot le plus élevé. --> resultat : une seule structure "chord"
+// Ou: faire un tableau de 12 chords, mais cela risque de tourner à la cacophonie !
 
 		bool *pressed = keypad_read (&keypad);
 		sleep_ms(5);
@@ -322,8 +314,9 @@ printf ("\n\n");
 		tud_task(); 												// tinyusb device task
 		midi_task();												// manage midi tasks, send notes, send program select
 
-		if (former_instrument != instrument) instrument_task ();	// load new instrument if required
-		song_task ();												// send to pico audio i2s board
+// the 2 below calls are useless as we now communicate with core1 (synth) through midi_task()
+//		if (former_instrument != instrument) instrument_task (instrument);	// load new instrument if required
+//		song_task ();												// send to pico audio i2s board
 
 		// make new chord & instrument become former chord & instrument
 		former_instrument = instrument;
@@ -355,10 +348,6 @@ printf ("\n\n");
 		}
 		// end of management of neopixel led strip	
 */
-
-
-    	// update audio buffer : make sure we do this regularly (in while loop)
-	   	update_buffer(ap, get_audio_frame);
 	}
 }
 
@@ -408,6 +397,7 @@ void midi_task()
 	// regardless of these being used or not. Therefore incoming traffic should be read
 	// (possibly just discarded) to avoid the sender blocking in IO
 	// here, we check for note_on event, and if received, then we light the Neopixel strip
+	uint32_t *data;
 	uint8_t packet[4];
 	bool read = false;
 	int i;
@@ -437,32 +427,48 @@ void midi_task()
 
 	// check for program change
 	uint8_t pgm_change[4] = { (cable_num << 4) | CIN_PGMCHANGE, MIDI_PGMCHANGE | CHANNEL, 0, 0};
+	data = (uint32_t *) pgm_change;			// assign 32-bit data as 4 bytes of 8-bit
+
 
 	// Send program change on channel in case instrument has changed, or at the very start of the program
 	if ((force_instrument) || (instrument != former_instrument)) {
 		force_instrument = false;
 		pgm_change[2] = (uint8_t) (instrument & 0x7F);
-		tud_midi_packet_write (pgm_change);
+		tud_midi_packet_write (pgm_change);			// send to USB
+
+		if (!queue_try_add(&synth_queue, data)) {	// send to synth
+			printf("Queue is full.\n");
+		}
 	}
 
 	// send notes off events
 	uint8_t note_off[4] = { (cable_num << 4) | CIN_NOTEOFF, MIDI_NOTEOFF | CHANNEL, 0, 0 };
+	data = (uint32_t *) note_off;			// assign 32-bit data as 4 bytes of 8-bit
 
 	// Send Note Off at no velocity (0) on channel.
 	for (i=0; i<midi_notes_off_size; i++) {
 		note_off[2] = midi_notes_off [i];
 		note_off[3] = 0x00;
-		tud_midi_packet_write (note_off);
+		tud_midi_packet_write (note_off);			// send to USB
+
+		if (!queue_try_add(&synth_queue, data)) {	// send to synth
+			printf("Queue is full.\n");
+		}
 	}
 
 	// send notes off events
 	uint8_t note_on[4] = { (cable_num << 4) | CIN_NOTEON, MIDI_NOTEON | CHANNEL, 0, 127 };
+	data = (uint32_t *) note_on;			// assign 32-bit data as 4 bytes of 8-bit
 
 	// Send Note On at full velocity (127) on channel.
 	for (i=0; i<midi_notes_on_size; i++) {
 		note_on[2] = midi_notes_on [i];
 		note_on[3] = 0x7F;
-		tud_midi_packet_write (note_on);
+		tud_midi_packet_write (note_on);			// send to USB
+
+		if (!queue_try_add(&synth_queue, data)) {	// send to synth
+			printf("Queue is full.\n");
+		}
 	}
 }
 
