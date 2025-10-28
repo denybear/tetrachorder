@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "globals.h"
+#include "audio.h"
 #include "synth.h"
 
 uint32_t prng_xorshift_state = 0x32B71700;
@@ -68,7 +69,8 @@ int16_t get_audio_frame() {
         AudioChannel* channel = &channels[c];
 
         // Increment the waveform position counter
-        channel->waveform_offset += ((channel->frequency * 256) << 8) / sample_rate;
+        // we do over-sampling, ie. instead of 256 samples per waveform, we consider to have 256 >> 8 = 65536 (16-bits)
+        channel->waveform_offset += ((channel->frequency * SAMPLES_PER_BUFFER) << 8) / sample_rate;
 
         if (channel->adsr_phase == ADSR_OFF) {
             continue;
@@ -96,12 +98,12 @@ int16_t get_audio_frame() {
 
         channel->adsr += channel->adsr_step;
         channel->adsr_frame++;
-
+/*
         if (channel->waveform_offset & 0x10000) {
             // Generate a new random noise sample
             channel->noise = prng_normal();
         }
-
+*/
         channel->waveform_offset &= 0xffff;
 
         // Check if any waveforms are active for this channel
@@ -113,6 +115,7 @@ int16_t get_audio_frame() {
             if (channel->frequency == 0) channel_sample +=0;
             // if channel frequency is not 0, then process sample
             else {
+/*
                 if (channel->waveforms & NOISE) {
                     channel_sample += channel->noise;
                     waveform_count++;
@@ -206,7 +209,10 @@ int16_t get_audio_frame() {
                         channel->wave_buf_pos = 0;
                     }
                     waveform_count++;
-                }                    
+                }
+*/
+channel_sample += (int32_t)(piano_waveform[(channel->waveform_offset) >> 8]);
+waveform_count++;                    
             }
 
             // Average the samples from all active waveforms
@@ -231,9 +237,10 @@ int16_t get_audio_frame() {
 
 
 void trigger_attack(AudioChannel* channel)  {
+	channel->waveform_offset = 0;
     channel->adsr_frame = 0;
     channel->adsr_phase = ADSR_ATTACK;
-printf ("note: %d, frequency:%d\n", channel->midi_note, channel->frequency);
+//printf ("note: %d, frequency:%d\n", channel->midi_note, channel->frequency);
     channel->adsr_end_frame = (channel->attack_ms * sample_rate) / 1000;
     channel->adsr_step = ((int32_t)(0xffffff) - (int32_t)(channel->adsr)) / (int32_t)(channel->adsr_end_frame);
     channel->active = true;

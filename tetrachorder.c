@@ -4,7 +4,7 @@
 // X audio.h à refaire (ou mettre à jour avec les vraies libraries)
 // regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
 // tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
-// faire fonctionner le synthetizer sur le core 1
+// faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
 // rajouter des instruments, synth.c à revoir
 //
 
@@ -272,7 +272,7 @@ int main(void)
 	instrument_task ();									// create and initialize all audio channels by loading new instrument
 	reset_playback_all ();								// at start, stop all audio channels and set all channels to inactive
 
-
+bool pressed [64];
 	// main
 	while (true) {
 		// Poll the keypad
@@ -294,6 +294,7 @@ int main(void)
 		sleep_ms(5);
 
 		instrument = parse_keyboard (chord, pressed);	// analyse key presses to get which chords has been selected
+
 		if (no_bass) reset_bass (chord);				// remove bass note in case we don't want to play it
 		// midi_notes that are contained in the chord
 		midi_notes_size = get_midi_notes (midi_notes, chord, voicing, voicing_bass);

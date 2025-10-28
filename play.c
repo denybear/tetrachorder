@@ -116,6 +116,7 @@ bool load_instrument(int instr, int chan) {
 	if ((chan <0) || (chan >= CHANNEL_COUNT)) return false;
 
 	// assign instrument parameters to the channel
+
 	channels[chan].waveforms   = instruments [instr][0];
 	channels[chan].attack_ms   = instruments [instr][1];
 	channels[chan].decay_ms    = instruments [instr][2];
@@ -123,7 +124,7 @@ bool load_instrument(int instr, int chan) {
 	channels[chan].sustain_ms  = instruments [instr][4];
 	channels[chan].release_ms  = instruments [instr][5];
 	channels[chan].volume      = instruments [instr][6];
-  
+
 	return true;
 }
 
@@ -143,11 +144,11 @@ void song_task() {
 
 	// go through the list of midi notes off, and stop corresponding channel, put the channel as inactive;
 	for (i=0; i < midi_notes_off_size; i++) {
-//printf ("number of note off: %d\n", midi_notes_off_size);
+printf ("number of note off: %d\n", midi_notes_off_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].midi_note == midi_notes_off[i]) {
 				// stop channel, set inactive
-//printf ("channel:%d, midi note off: %d\n", j, midi_notes_off[i]);
+printf ("channel:%d, midi note off: %d\n", j, midi_notes_off[i]);
 				stop_playback (j);
 				// channels[j].off();
 			}
@@ -156,11 +157,11 @@ void song_task() {
 
 	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
 	for (i=0; i < midi_notes_on_size; i++) {
-//printf ("number of note on: %d\n", midi_notes_on_size);
+printf ("number of note on: %d\n", midi_notes_on_size);
 		for (j = 0; j < CHANNEL_COUNT; j++) {
 			if (channels[j].active == false) {
 				// empty channel: let's use it and play!
-//printf ("channel:%d, midi note on: %d\n", j, midi_notes_on[i]);			
+printf ("channel:%d, midi note on: %d\n", j, midi_notes_on[i]);			
 				update_playback (j, midi_notes_on[i]);
 				break;			// assign note to a single channel, then move to next note
 			}
