@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "keypad.h"
 #include "chord.h"
+#include "keypad.h"
 #include "kbd_events.h"
 
 
@@ -55,43 +56,64 @@ bool build_full_chord (uint8_t root, void *pointer) {
 // parse keyboard and based on which key is pressed, build chord
 // kbd is a pointer to an array of bools; this array indicates whether the key is pressed or not
 // this allows to have an instant photograph of the keyboard at regular times, and use this to build chord
-// as inputs, it uses pointer to chord (which will be populated based on which key is pressed) and pointer to keyboard array (gotten from bool* keypad_read() function)
+// as inputs, it uses pointer to chord (which will be populated based on which key is pressed) and pointer to KeypadMatrix (gotten from keypad_read() function)
 // it returns the pointer to chord array fully populated, as well as instrument number
-uint8_t parse_keyboard (void *pointer, bool *kbd) {
+uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 
 	chord_t *chord = (chord_t *)pointer;
+	bool pressed [13];											// if the key has been pressed
+	uint64_t when_pressed [13];									// when the key has been pressed
+	int i, index;
 
 	// define which key corresponds to which byte in the keypad array; yes this is tedious, but this is better for readibility and quick changes
 	// SIDE_MAX_SIZE = size of the array (columns = rows)
-	bool C     = kbd [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
-	bool Cs    = kbd [(1 * SIDE_MAX_SIZE) + 0];
-	bool D     = kbd [(2 * SIDE_MAX_SIZE) + 0];
-	bool Ds    = kbd [(3 * SIDE_MAX_SIZE) + 0];
-	bool E     = kbd [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
-	bool F     = kbd [(1 * SIDE_MAX_SIZE) + 1];
-	bool Fs    = kbd [(2 * SIDE_MAX_SIZE) + 1];
-	bool G     = kbd [(3 * SIDE_MAX_SIZE) + 2];
-	bool Gs    = kbd [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	bool A     = kbd [(1 * SIDE_MAX_SIZE) + 2];
-	bool As    = kbd [(2 * SIDE_MAX_SIZE) + 2];
-	bool B     = kbd [(3 * SIDE_MAX_SIZE) + 2];
-	bool add11 = kbd [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	bool no3   = kbd [(1 * SIDE_MAX_SIZE) + 2];
-	bool no5   = kbd [(2 * SIDE_MAX_SIZE) + 2];
-	bool no7   = kbd [(3 * SIDE_MAX_SIZE) + 2];
-	bool add9  = kbd [(0 * SIDE_MAX_SIZE) + 3];		// column, rows
-	bool maj3  = kbd [(1 * SIDE_MAX_SIZE) + 3];
-	bool b5    = kbd [(2 * SIDE_MAX_SIZE) + 3];
-	bool maj7  = kbd [(3 * SIDE_MAX_SIZE) + 3];
-	bool sw0   = kbd [(0 * SIDE_MAX_SIZE) + 4];		// column, rows
-	bool sw1   = kbd [(1 * SIDE_MAX_SIZE) + 4];
-	bool sw2   = kbd [(2 * SIDE_MAX_SIZE) + 4];
-	bool sw3   = kbd [(3 * SIDE_MAX_SIZE) + 4];
-	bool sw4   = kbd [(0 * SIDE_MAX_SIZE) + 5];		// column, rows
-	bool sw5   = kbd [(1 * SIDE_MAX_SIZE) + 5];
-	bool sw6   = kbd [(2 * SIDE_MAX_SIZE) + 5];
-	bool sw7   = kbd [(3 * SIDE_MAX_SIZE) + 5];
-	
+	bool add11 = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
+	bool no3   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
+	bool no5   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
+	bool no7   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+	bool add9  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 3];		// column, rows
+	bool maj3  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 3];
+	bool b5    = kbd->pressed [(2 * SIDE_MAX_SIZE) + 3];
+	bool maj7  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 3];
+	bool sw0   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 4];		// column, rows
+	bool sw1   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 4];
+	bool sw2   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 4];
+	bool sw3   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 4];
+	bool sw4   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 5];		// column, rows
+	bool sw5   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 5];
+	bool sw6   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 5];
+	bool sw7   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 5];
+
+	// chromatic keyboard
+	uint64_t when_pressed [0]  = 0;													// when the key has been pressed
+	uint64_t when_pressed [1]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
+	uint64_t when_pressed [2]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 0];
+	uint64_t when_pressed [3]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 0];
+	uint64_t when_pressed [4]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 0];
+	uint64_t when_pressed [5]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
+	uint64_t when_pressed [6]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 1];
+	uint64_t when_pressed [7]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 1];
+	uint64_t when_pressed [8]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
+	uint64_t when_pressed [9]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
+	uint64_t when_pressed [10] = kbd->press_times [(1 * SIDE_MAX_SIZE) + 2];
+	uint64_t when_pressed [11] = kbd->press_times [(2 * SIDE_MAX_SIZE) + 2];
+	uint64_t when_pressed [12] = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
+
+	uint64_t pressed [0]  = false;										// if the key has been pressed
+	uint64_t pressed [1]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
+	uint64_t pressed [2]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 0];
+	uint64_t pressed [3]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 0];
+	uint64_t pressed [4]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 0];
+	uint64_t pressed [5]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
+	uint64_t pressed [6]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 1];
+	uint64_t pressed [7]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 1];
+	uint64_t pressed [8]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+	uint64_t pressed [9]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
+	uint64_t pressed [10] = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
+	uint64_t pressed [11] = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
+	uint64_t pressed [12] = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+
+
 	// analyse the keypad, key by key
 	reset_rootnote (chord);			// start with empty chord and bass
 
@@ -107,18 +129,13 @@ uint8_t parse_keyboard (void *pointer, bool *kbd) {
 	instrument = sw7 ? (instrument | 1) : instrument;
 
 	// analyse chromatic keyboard (we don't check for errors, we assume the code is correct)
-	if (C) build_full_chord (1, chord);
-	if (Cs) build_full_chord (2, chord);
-	if (D) build_full_chord (3, chord);
-	if (Ds) build_full_chord (4, chord);
-	if (E) build_full_chord (5, chord);
-	if (F) build_full_chord (6, chord);
-	if (Fs) build_full_chord (7, chord);
-	if (G) build_full_chord (8, chord);
-	if (Gs) build_full_chord (9, chord);
-	if (A) build_full_chord (10, chord);
-	if (As) build_full_chord (11, chord);
-	if (B) build_full_chord (12, chord);
+	// get the index of the key that has been pressed last
+	index = 0;
+	for (i=1; i<13; i++) {
+		if ((pressed [i]) && (when_pressed [i] >= when_pressed [index])) index = i;
+	}
+	// index contains the chord whose key has been pressed last
+	if (index != 0) build_full_chord (index, chord);
 
 	// analyse modulation keyboard
 	if (add9) set_9 (chord);

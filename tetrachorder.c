@@ -3,9 +3,9 @@
 // X refactor PICOUI with .h, new button + encoder module, etc
 // X audio.h à refaire (ou mettre à jour avec les vraies libraries)
 // regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
-// tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
+// X tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
 // X faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
-// rajouter des instruments, synth.c à revoir
+// X rajouter des instruments, synth.c à revoir
 //
 // BEWARE, but it should not happen:
 // 1- We should recalculate the chord if voicing changes (this should be done already, in theory)
@@ -222,7 +222,7 @@ int main(void)
 
 	// init multicore and queue for communication
 	queue_init(&synth_queue, sizeof(uint32_t), 256);	// Initialize a queue for 256 items of 4 bytes (uint32)
-	multicore_launch_core1 (core1_main);	// Reset core1 for synth and and enter the core1_main function
+	multicore_launch_core1 (core1_main);				// Reset core1 for synth and and enter the core1_main function
 
 	// init device stack on configured roothub port
 	tud_init(BOARD_TUD_RHPORT);
@@ -232,8 +232,7 @@ int main(void)
 	}
 
 	// Globals init
-//for (int i=0; i<12;i++) chord [i] = create_chord ();		// current chord to be played
-	chord = create_chord ();								// current chord to be played
+	chord = create_chord ();							// current chord to be played
 
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here
@@ -264,28 +263,21 @@ int main(void)
 	// main
 	while (true) {
 		// Poll the keypad
-		//keypad_read(&keypad);
-		/* Alternatively, the output of keypad_read() can
-		be stored as a pointer to the array containing
-		the state of each key: */
-//*****HERE
-// ici 2 écoles s'affrontent
-// ceux qui lisent les clavier touche à touche, et qui adaptent l'accord en fonction des touches appuyées
-// ou ceux qui lisent tout le clavier en entier, et en déduisent les accords
-// on va faire ça, mais cela veut dire qu'il faut un tableau de 12 accords, au cas où les 12 touches du clavier sont appuyées en même temps
-// en ayant 1 seul chord, alors c'est la dernière touche du clavier analysée qui devient l'accord
-//
-// autre méthode: on lit l'ensemble des touches pour les extensions d'accord, et on utilise les callback pour fixer
-// l'accord chromatique qui a été le dernier a être composé... mais c'est compliqué à faire du fait de la gestion des callbacks
-// derière méthode:
-// mettre un time since boot us dans le tableau des keypress, et on utilise uniquement la dernière keypress sur le kbd chromatique,
-// c'est à dire le time since boot le plus élevé. --> resultat : une seule structure "chord"
-// Ou: faire un tableau de 12 chords, mais cela risque de tourner à la cacophonie !
+		// keypad_read(&keypad);
+		// Alternatively, the output of keypad_read() can be stored as a pointer to the array containing the state of each key.
+		//
+		// how to deal with several chords being pressed at the same time? For example C chord and D chord pressed at the same time?
+		// 2 options:
+		// a- we make a 12 chord table, and manage 12 chords instead of 1; drawback is managing 12 chords and having 12 chords pressed at the same time
+		// will end up in a too noisy situation
+		//
+		// b- we use a timer to detect when chord keys have been pressed, and take only into account the latest chord key pressed (based on "when" value);
+		// this is what we will do, and hopefully the timer is implemented in keypad.c already
 
-		bool *pressed = keypad_read (&keypad);
+		keypad_read (&keypad);
 		sleep_ms(5);
 
-		instrument = parse_keyboard (chord, pressed);	// analyse key presses to get which chords has been selected
+		instrument = parse_keyboard (chord, &keypad);	// analyse key presses to get which chords has been selected
 
 		if (no_bass) reset_bass (chord);				// remove bass note in case we don't want to play it
 		// midi_notes that are contained in the chord
