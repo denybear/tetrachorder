@@ -3,8 +3,6 @@
 
 #include "pico/stdlib.h"
 
-#define NB_INSTRUMENTS 11
-
 void update_playback (int, uint8_t);
 void stop_playback (int);
 void reset_playback (int);

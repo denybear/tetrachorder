@@ -54,25 +54,6 @@
 #define PI 3.14159265358979323846f
 
 typedef enum {
-    FLUTE         = 131072,
-    CLARINETTE    = 65536,
-    OBOE          = 32768,
-    HORN          = 16384,
-    VIOLIN        = 8192,
-    PLUCKEDGUITAR = 4096,
-    GUITAR        = 2048,
-    REED          = 1024,
-    PIANO2        = 512,
-    PIANO         = 256,
-    NOISE         = 128,
-    SQUARE        = 64,
-    SAW           = 32,
-    TRIANGLE      = 16,
-    SINE          = 8,
-    WAVE          = 1
-} Waveform;
-
-typedef enum {
     ADSR_ATTACK,
     ADSR_DECAY,
     ADSR_SUSTAIN,
@@ -82,7 +63,7 @@ typedef enum {
 
 typedef struct {
     bool active;                      // Channel is active
-    Waveform waveforms;               // Bitmask for enabled waveforms
+    uint8_t waveforms;                // # of waveform
     uint16_t frequency;               // Frequency of the voice (Hz)
     uint16_t volume;                  // Channel volume
     uint8_t midi_note;                // MIDI note played on the channel
@@ -92,9 +73,6 @@ typedef struct {
     uint16_t sustain;                 // Sustain volume
     uint16_t sustain_ms;              // Sustain period
     uint16_t release_ms;              // Release period
-    uint16_t pulse_width;             // Duty cycle of square wave
-
-    int16_t noise;                    // Current noise value
 
     uint32_t waveform_offset;         // Voice offset (Q8)
 
@@ -107,13 +85,6 @@ typedef struct {
     uint32_t adsr;                    // Current ADSR value
     int32_t adsr_step;                // ADSR step value
     ADSRPhase adsr_phase;             // Current ADSR phase
-
-    uint8_t wave_buf_pos;             // Position in wave buffer
-    int16_t wave_buffer[64];          // Buffer for arbitrary waveforms
-
-    void* user_data;                  // User data pointer
-    //void (*wave_buffer_callback)(struct AudioChannel* channel); // Callback for wave buffer
-
 } AudioChannel;
 
 void set_audio_rate_and_volume (uint32_t, uint16_t);
