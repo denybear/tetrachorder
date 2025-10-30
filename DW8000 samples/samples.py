@@ -1,19 +1,13 @@
+"""
+python samples.py <num_samples> <root_directory> <show_graphs:yes|no> <check_duplicates:yes|no> <array_type:2d|3d> <start_index:int>
+"""
+
 import wave
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import resample
 import os
 import sys
-import hashlib
-
-"""
-python script.py 128 ./my_audio_folder yes
-Recursively process all .wav files under ./my_audio_folder
-Save converted files in ./output/
-Create a single samples.txt with all sample arrays and labels
-Use yes to show graphs. Use no to skip plotting.
-"""
-
 
 def convert_to_signed_16bit(data, sampwidth):
     if sampwidth == 1:
@@ -49,19 +43,41 @@ def find_wav_files(root_dir):
                 wav_files.append(os.path.join(dirpath, f))
     return wav_files
 
-def write_c_array(output_dir, sample_matrix, label_list):
+def write_c_array(output_dir, sample_matrix, label_list, array_type, start_index):
     txt_path = os.path.join(output_dir, "samples.txt")
     with open(txt_path, 'w') as f:
-        f.write(f"const int16_t samples[{len(sample_matrix)}][256] = {{\n")
-        for i, row in enumerate(sample_matrix):
-            f.write("  { " + ", ".join(str(val) for val in row) + " }")
-            f.write(",\n" if i < len(sample_matrix) - 1 else "\n")
-        f.write("};\n\n")
+        if array_type == "2d":
+            f.write(f"const int16_t samples[{start_index + len(sample_matrix)}][256] = {{\n")
+            for i, row in enumerate(sample_matrix):
+                f.write("  { " + ", ".join(str(val) for val in row) + " }")
+                f.write(",\n" if i < len(sample_matrix) - 1 else "\n")
+            f.write("};\n\n")
+        elif array_type == "3d":
+            num_groups = (len(sample_matrix) + 7) // 8  # ceil division
+            f.write(f"const int16_t samples[{start_index + num_groups}][8][256] = {{\n")
+            for g in range(num_groups):
+                f.write("  {\n")
+                for i in range(8):
+                    idx = g * 8 + i
+                    if idx < len(sample_matrix):
+                        row = sample_matrix[idx]
+                        f.write("    { " + ", ".join(str(val) for val in row) + " }")
+                    else:
+                        f.write("    { " + ", ".join("0" for _ in range(256)) + " }")
+                    f.write(",\n" if i < 7 else "\n")
+                f.write("  }")
+                f.write(",\n" if g < num_groups - 1 else "\n")
+            f.write("};\n\n")
+        else:
+            raise ValueError("Invalid array type. Use '2d' or '3d'.")
+
         f.write("// Labels:\n")
         for i, label in enumerate(label_list):
-            f.write(f"// [{i}] {label}\n")
+            group = start_index + (i // 8)
+            index = i % 8
+            f.write(f"// [{group}][{index}] {label}\n")
 
-def process_file(input_path, num_samples, output_dir, sample_matrix, label_list, show_graphs):
+def process_file(input_path, num_samples, output_dir, sample_matrix, label_list, show_graphs, check_duplicates):
     with wave.open(input_path, 'rb') as wav_file:
         n_channels = wav_file.getnchannels()
         sampwidth = wav_file.getsampwidth()
@@ -77,10 +93,11 @@ def process_file(input_path, num_samples, output_dir, sample_matrix, label_list,
     resampled = resample(extracted, 256)
     resampled = safe_clip_to_int16(resampled)
 
-    print("Checking for duplicates...")
-    if is_duplicate_fuzzy(resampled, sample_matrix, threshold=0.995):
-        print(f"Near-duplicate waveform detected — skipping {input_path}")
-        return
+    if check_duplicates:
+        print("Checking for duplicates...")
+        if is_duplicate_fuzzy(resampled, sample_matrix, threshold=0.995):
+            print(f"Near-duplicate waveform detected — skipping {input_path}")
+            return
 
     rel_path = os.path.relpath(input_path)
     parts = os.path.splitext(rel_path)[0].split(os.sep)
@@ -109,13 +126,17 @@ def process_file(input_path, num_samples, output_dir, sample_matrix, label_list,
         plt.show()
 
 def main():
-    if len(sys.argv) < 4:
-        print("Usage: python script.py <num_samples> <root_directory> <show_graphs:yes|no>")
+    if len(sys.argv) < 7:
+        print("Usage: python script.py <num_samples> <root_directory> <show_graphs:yes|no> <check_duplicates:yes|no> <array_type:2d|3d> <start_index:int>")
         return
 
     num_samples = int(sys.argv[1])
     root_dir = sys.argv[2]
     show_graphs = sys.argv[3].lower() == "yes"
+    check_duplicates = sys.argv[4].lower() == "yes"
+    array_type = sys.argv[5].lower()
+    start_index = int(sys.argv[6])
+
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -127,10 +148,10 @@ def main():
 
     for wav_file in wav_files:
         print(f"Processing: {wav_file}")
-        process_file(wav_file, num_samples, output_dir, sample_matrix, label_list, show_graphs)
+        process_file(wav_file, num_samples, output_dir, sample_matrix, label_list, show_graphs, check_duplicates)
 
-    write_c_array(output_dir, sample_matrix, label_list)
-    print(f"\nAll unique files processed. Output saved in '{output_dir}'.")
+    write_c_array(output_dir, sample_matrix, label_list, array_type, start_index)
+    print(f"\nAll files processed. Output saved in '{output_dir}'.")
 
 if __name__ == "__main__":
     main()
