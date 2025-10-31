@@ -75,8 +75,11 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 	bool maj3  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 3];
 	bool b5    = kbd->pressed [(2 * SIDE_MAX_SIZE) + 3];
 	bool maj7  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 3];
-	bool sw0   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 4];		// column, rows
-	bool sw1   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 4];
+	// instrument on 6-bit (64 instruments) instead of 8-bit (256 instruments)
+	bool sw0   = false;
+	bool sw1   = false;
+//	bool sw0   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 4];		// column, rows
+//	bool sw1   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 4];
 	bool sw2   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 4];
 	bool sw3   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 4];
 	bool sw4   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 5];		// column, rows
@@ -85,33 +88,33 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 	bool sw7   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 5];
 
 	// chromatic keyboard
-	uint64_t when_pressed [0]  = 0;													// when the key has been pressed
-	uint64_t when_pressed [1]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
-	uint64_t when_pressed [2]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 0];
-	uint64_t when_pressed [3]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 0];
-	uint64_t when_pressed [4]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 0];
-	uint64_t when_pressed [5]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
-	uint64_t when_pressed [6]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 1];
-	uint64_t when_pressed [7]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 1];
-	uint64_t when_pressed [8]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
-	uint64_t when_pressed [9]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	uint64_t when_pressed [10] = kbd->press_times [(1 * SIDE_MAX_SIZE) + 2];
-	uint64_t when_pressed [11] = kbd->press_times [(2 * SIDE_MAX_SIZE) + 2];
-	uint64_t when_pressed [12] = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
+	when_pressed [0]  = 0;													// when the key has been pressed
+	when_pressed [1]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
+	when_pressed [2]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 0];
+	when_pressed [3]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 0];
+	when_pressed [4]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 0];
+	when_pressed [5]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
+	when_pressed [6]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 1];
+	when_pressed [7]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 1];
+	when_pressed [8]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
+	when_pressed [9]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
+	when_pressed [10] = kbd->press_times [(1 * SIDE_MAX_SIZE) + 2];
+	when_pressed [11] = kbd->press_times [(2 * SIDE_MAX_SIZE) + 2];
+	when_pressed [12] = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
 
-	uint64_t pressed [0]  = false;										// if the key has been pressed
-	uint64_t pressed [1]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
-	uint64_t pressed [2]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 0];
-	uint64_t pressed [3]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 0];
-	uint64_t pressed [4]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 0];
-	uint64_t pressed [5]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
-	uint64_t pressed [6]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 1];
-	uint64_t pressed [7]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 1];
-	uint64_t pressed [8]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
-	uint64_t pressed [9]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	uint64_t pressed [10] = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
-	uint64_t pressed [11] = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
-	uint64_t pressed [12] = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+	pressed [0]  = false;										// if the key has been pressed
+	pressed [1]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
+	pressed [2]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 0];
+	pressed [3]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 0];
+	pressed [4]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 0];
+	pressed [5]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
+	pressed [6]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 1];
+	pressed [7]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 1];
+	pressed [8]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+	pressed [9]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
+	pressed [10] = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
+	pressed [11] = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
+	pressed [12] = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
 
 
 	// analyse the keypad, key by key
@@ -135,18 +138,20 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 		if ((pressed [i]) && (when_pressed [i] >= when_pressed [index])) index = i;
 	}
 	// index contains the chord whose key has been pressed last
-	if (index != 0) build_full_chord (index, chord);
+	if (index != 0) {
+		build_full_chord (index, chord);
 
-	// analyse modulation keyboard
-	if (add9) set_9 (chord);
-	if (maj3) set_3 (chord);
-	if (b5) set_b5 (chord);
-	if (maj7) set_7 (chord);
-	if (add11) set_11 (chord);
-	if (no3) reset_3 (chord);
-	if (no5) reset_5 (chord);
-	if (no7) reset_7 (chord);
-
+		// analyse modulation keyboard
+		if (add9) set_9 (chord);
+		if (maj3) set_3 (chord);
+		if (b5) set_b5 (chord);
+		if (maj7) set_7 (chord);
+		if (add11) set_11 (chord);
+		if (no3) reset_3 (chord);
+		if (no5) reset_5 (chord);
+		if (no7) reset_7 (chord);
+	}
+	
 	return instrument;
 }
 

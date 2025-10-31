@@ -7,8 +7,8 @@
 #include "globals.h"
 #include "audio.h"
 #include "synth.h"
-#include "waveforms.h"
 #include "play.h"
+#include "waveforms.h"
 
 // plays a note on a channel 
 void update_playback (int chan, uint8_t note) {

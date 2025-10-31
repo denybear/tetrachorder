@@ -7,7 +7,9 @@
 #include "globals.h"
 #include "audio.h"
 #include "synth.h"
-#include "waveforms.h"
+
+extern const int16_t waveforms[64][8][256];
+
 
 uint32_t prng_xorshift_state = 0x32B71700;
 
@@ -52,6 +54,7 @@ bool is_audio_playing() {
 
 int16_t get_audio_frame() {
     int32_t sample = 0; // Used to combine channel output
+    int64_t temp;
 	int index = 0;
 
     for (int c = 0; c < CHANNEL_COUNT; c++) {
@@ -91,7 +94,7 @@ int16_t get_audio_frame() {
 
         // Check if any waveforms are active for this channel
         if (channel->active) {
-            int32_t channel_sample;
+            int32_t channel_sample = 0;
 
             // check if channel frequency is 0; if so, then sample shall be 0
             if (channel->frequency == 0) channel_sample =0;
@@ -114,23 +117,46 @@ int16_t get_audio_frame() {
             }
 
             // Scale by ADSR and volume
-            channel_sample = ((int64_t)(channel_sample) * (int32_t)(channel->adsr >> 8)) >> 16;
-            channel_sample = ((int64_t)(channel_sample) * (int32_t)(channel->volume)) >> 16;
+            // channel sample at this stage is signed 16-bits
+            // it looks as if channel->adsr is actually unsigned 24-bit, but expressed on 32-bit
+
+//            temp = (int32_t)(channel_sample) * (uint32_t)(channel->adsr >> 8);
+//            channel_sample = (int32_t)(temp >> 16);
+//            temp = (int32_t)(channel_sample) * (uint32_t)(channel->volume);
+//            channel_sample = (int32_t)(temp >> 16);
+
+//        channel_sample = ((int64_t)(channel_sample) * (int32_t)(channel->adsr >> 8)) >> 16;
+//        channel_sample = ((int64_t)(channel_sample) * (int32_t)(channel->volume)) >> 16;
+
 
             // Combine channel sample into the final sample
             sample += channel_sample;
         }
     }
-    sample = ((int64_t)(sample) * (int32_t)(volume)) >> 16;
+//    temp = (int32_t)(sample) * (uint32_t)(volume);
+//    sample = (int32_t)(temp >> 16);
+
+//sample = ((int64_t)(sample) * (int32_t)(volume)) >> 16;
+
+    sample = sample >> 8;
 
     // Clip result to 16-bit
-    sample = (sample <= -0x8000) ? -0x8000 : ((sample > 0x7fff) ? 0x7fff : sample);
+    if (sample < -0x8000) {
+        printf ("clipping low\n");
+        sample = -0x8000;
+    }
+    if (sample > 0x7fff) {
+        printf ("clipping high\n");
+        sample = 0x7fff;
+    }
+    //sample = (sample <= -0x8000) ? -0x8000 : ((sample > 0x7fff) ? 0x7fff : sample);
     return sample;
 }
 
 
 void trigger_attack(AudioChannel* channel)  {
 	channel->waveform_offset = 0;
+    channel->adsr = 0;
     channel->adsr_frame = 0;
     channel->adsr_phase = ADSR_ATTACK;
     channel->adsr_end_frame = (channel->attack_ms * sample_rate) / 1000;
@@ -164,6 +190,7 @@ void trigger_release(AudioChannel* channel) {
 
 void off(AudioChannel* channel) {
     channel->adsr_frame = 0;
+    channel->adsr = 0;
     channel->adsr_phase = ADSR_OFF;
     channel->adsr_step = 0;
     channel->active = false;

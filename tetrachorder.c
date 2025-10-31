@@ -2,7 +2,7 @@
 // X push dans github, puis virer les fichiers inutiles
 // X refactor PICOUI with .h, new button + encoder module, etc
 // X audio.h à refaire (ou mettre à jour avec les vraies libraries)
-// regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
+// X regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
 // X tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
 // X faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
 // X rajouter des instruments, synth.c à revoir
@@ -275,7 +275,7 @@ int main(void)
 		// this is what we will do, and hopefully the timer is implemented in keypad.c already
 
 		keypad_read (&keypad);
-		sleep_ms(5);
+		sleep_ms(20);
 
 		instrument = parse_keyboard (chord, &keypad);	// analyse key presses to get which chords has been selected
 
@@ -284,24 +284,8 @@ int main(void)
 		midi_notes_size = get_midi_notes (midi_notes, chord, voicing, voicing_bass);
 		// determine lists of notes which should be on / off, and list of notes that are common
 		midi_notes_common_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, true, midi_notes_common);
-
-if (midi_notes_common_size !=0){
-printf ("common notes:%d  -  , note:", midi_notes_common_size);
-for (int i=0; i< 10; i++) printf ("%d ", midi_notes_common[i]);
-printf ("\n\n");
-}
 		midi_notes_on_size = cmp_midi_notes (midi_notes, midi_notes_size, former_midi_notes, former_midi_notes_size, false, midi_notes_on);
-if (midi_notes_on_size !=0){
-printf ("on notes:%d  -  , note:", midi_notes_on_size);
-for (int i=0; i< 10; i++) printf ("%d ", midi_notes_on[i]);
-printf ("\n\n");
-}
 		midi_notes_off_size = cmp_midi_notes (former_midi_notes, former_midi_notes_size, midi_notes, midi_notes_size,  false, midi_notes_off);
-if (midi_notes_off_size !=0){
-printf ("off notes:%d  -  , note:", midi_notes_off_size);
-for (int i=0; i< 10; i++) printf ("%d ", midi_notes_off[i]);
-printf ("\n\n");
-}
 
 		tud_task(); 												// tinyusb device task
 		midi_task();												// manage midi tasks, send notes, send program select
