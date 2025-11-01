@@ -24,56 +24,56 @@ const float frequencies[] = {
     8372.018, 8869.844, 9397.273, 9956.063, 10548.080, 11175.300, 11839.820, 12543.850
 };
 
-// attack in ms, decay in ms, sustain volume (0xafff = 70% of max volume), sustain in ms,
+// attack in ms, decay in ms, sustain volume (0xffff = 100% of max volume; 0xafff = 70% of the volume), sustain in ms,
 // release in ms, channel volume (set at 0x7fff, ie.50% of max volume to avoid saturation; it can be up to 0xffff)
 const uint32_t instruments[64][6] = {
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// sinus
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// piano
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// piano2
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// reed
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// guitar
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// plucked guitar
-	{120, 50, 0xafff, 2000, 100, 0x7fff},			// violin
-	{120, 50, 0xafff, 2000, 100, 0x7fff},			// horn
-	{120, 50, 0xafff, 2000, 100, 0x7fff},			// oboe
-	{120, 50, 0xafff, 2000, 100, 0x7fff},			// flute
-	{120, 50, 0xafff, 2000, 100, 0x7fff},			// clarinette
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// sinus
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// piano
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// piano2
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// reed
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// guitar
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// plucked guitar
+	{120, 50, 0xffff, 2000, 100, 0xffff},			// violin
+	{120, 50, 0xffff, 2000, 100, 0xffff},			// horn
+	{120, 50, 0xffff, 2000, 100, 0xffff},			// oboe
+	{120, 50, 0xffff, 2000, 100, 0xffff},			// flute
+	{120, 50, 0xffff, 2000, 100, 0xffff},			// clarinette
 
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// DW8000 instruments (index 11)
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// DW8000 instruments (index 11)
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
 	
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// index 20
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 20
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
 	
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// index 30
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 30
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
 	
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// index 40
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},
-	{30, 20, 0xafff, 2000, 1000, 0x7fff},			// index 42
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 40
+	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 42
 	{0},
 	{0},
 	{0},

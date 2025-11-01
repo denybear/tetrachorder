@@ -4,7 +4,7 @@
 #include "pico/stdlib.h"
 
 
-void update_playback (int, uint8_t);
+void update_playback (int, uint8_t, bool);
 void stop_playback (int);
 void reset_playback (int);
 void reset_playback_all ();

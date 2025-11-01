@@ -49,7 +49,7 @@
 
 
 
-#define CHANNEL_COUNT 16
+#define CHANNEL_COUNT 16          // 4 notes + bass + 9th + 11th = 7 channels * 2 = 14; let's make it 16
 
 #define PI 3.14159265358979323846f
 
@@ -62,7 +62,6 @@ typedef enum {
 } ADSRPhase;
 
 typedef struct {
-    bool active;                      // Channel is active
     uint8_t waveforms;                // # of waveform
     uint16_t frequency;               // Frequency of the voice (Hz)
     uint16_t volume;                  // Channel volume
@@ -91,6 +90,7 @@ void set_audio_rate_and_volume (uint32_t, uint16_t);
 int16_t get_audio_frame(void);
 bool is_audio_playing(void);
 
+void retrigger_attack(AudioChannel* channel);
 void trigger_attack(AudioChannel* channel);
 void trigger_decay(AudioChannel* channel);
 void trigger_sustain(AudioChannel* channel);

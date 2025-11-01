@@ -105,7 +105,7 @@ KeypadMatrix keypad;
  * @param key Key number
  */
 void key_pressed(uint8_t key){
-	printf("Key %d pressed\n", key);
+//	printf("Key %d pressed\n", key);
 }
 
 /**
@@ -114,7 +114,7 @@ void key_pressed(uint8_t key){
  * @param key Key number
  */
 void key_released(uint8_t key){
-	printf("Key %d released\n", key);
+//	printf("Key %d released\n", key);
 }
 
 /**
@@ -123,7 +123,7 @@ void key_released(uint8_t key){
  * @param key Key number
  */
 void key_long_pressed(uint8_t key){
-	printf("Key %d long pressed\n", key);
+//	printf("Key %d long pressed\n", key);
 }
 
 
@@ -232,7 +232,8 @@ int main(void)
 	}
 
 	// Globals init
-	chord = create_chord ();							// current chord to be played
+	chord = create_chord ();	// create current chord to be played
+	reset_playback_all ();		// reset all synth channels to off
 
 	// Rotary encoder inits
 	rotary_encoder_t *encoder = create_encoder(2, 3, onchange);			// GPIO to be changed here

@@ -11,12 +11,13 @@
 #include "waveforms.h"
 
 // plays a note on a channel 
-void update_playback (int chan, uint8_t note) {
+void update_playback (int chan, uint8_t note, bool retrigger) {
 
 	// get notes data from the structure, and pass it to synthetizer
 	channels[chan].midi_note = note;
 	channels[chan].frequency = (uint16_t) roundf (frequencies [note]);
-	trigger_attack (&channels[chan]);
+	if (retrigger) retrigger_attack (&channels[chan]);		// retrigger attack while note is playing already
+	else trigger_attack (&channels[chan]);					// tigger attack as note is not playing already
 }
 
 
@@ -78,6 +79,7 @@ bool load_instrument(int instr, int chan) {
 void song_task() {
 
 	int i, j;
+	bool found;
 	
 	// go through the list of notes to be kept untouched, and do nothing to the channel
 	for (i=0; i < midi_notes_common_size; i++) {
@@ -99,10 +101,23 @@ void song_task() {
 
 	// go through the list of midi notes on, and start corresponding channel, by: 1- making sure the note is not played already (should not happen as in this case, the note should // be in the "untouched" list), and 2- we assign note to an inactive channel
 	for (i=0; i < midi_notes_on_size; i++) {
+		found = false;
+		// check if the same note is being played already (still in ADSR, eg. in release mode); if so, then trigger attack again
 		for (j = 0; j < CHANNEL_COUNT; j++) {
-			if (channels[j].active == false) {
-				// empty channel: let's use it and play!	
-				update_playback (j, midi_notes_on[i]);
+			if ((channels[j].adsr_phase != ADSR_OFF) && (channels[j].midi_note == midi_notes_on[i])) {
+				// channel plays same note already: let's use it and attack again!
+				update_playback (j, midi_notes_on[i], true);
+				found = true;
+				break;			// assign note to a single channel, then move to next note
+			}
+		}
+		if (found) break;		// if we play the note, then leave
+
+		// in case the same note is not being played already, find an empty channel to play note
+		for (j = 0; j < CHANNEL_COUNT; j++) {
+			if (channels[j].adsr_phase == ADSR_OFF) {
+				// empty channel: let's use it and play!
+				update_playback (j, midi_notes_on[i], false);
 				break;			// assign note to a single channel, then move to next note
 			}
 		}
@@ -122,6 +137,7 @@ void core1_main() {		//The program running on core 1
 	uint32_t data;
 	uint8_t *midi;
 	int i,j;
+	bool found;
 
 	// configure audio
 	struct audio_buffer_pool *ap = init_audio();
@@ -138,6 +154,7 @@ void core1_main() {		//The program running on core 1
 				case MIDI_PGMCHANGE:
 					instrument_task (midi[2]);
 				break;
+
 				case MIDI_NOTEOFF:
 					for (i = 0; i < CHANNEL_COUNT; i++) {
 						if (channels[i].midi_note == midi[2]) {
@@ -146,11 +163,25 @@ void core1_main() {		//The program running on core 1
 						}
 					}
 				break;
+
 				case MIDI_NOTEON:
+					found = false;
+					// check if the same note is being played already (still in ADSR); if so, then trigger attack again
 					for (i = 0; i < CHANNEL_COUNT; i++) {
-						if (channels[i].active == false) {
+						if ((channels[i].adsr_phase != ADSR_OFF) && (channels[i].midi_note == midi[2])) {
+							// channel plays same note already: let's use it and attack again!
+							update_playback (i, midi[2], true);
+							found = true;
+							break;			// assign note to a single channel, then move to next note
+						}
+					}
+					if (found) break;		// if we play the note, then leave
+
+					// in case the same note is not being played already, find an empty channel to play note
+					for (i = 0; i < CHANNEL_COUNT; i++) {
+						if (channels[i].adsr_phase == ADSR_OFF) {
 							// empty channel: let's use it and play!
-							update_playback (i, midi[2]);
+							update_playback (i, midi[2], false);
 							break;			// assign note to a single channel, then move to next note
 						}
 					}
