@@ -87,12 +87,12 @@ void midi_task();
 /**
  * @brief Define the keypad matrix column GPIOs
  */
-const uint8_t cols[] = {6, 7};
+const uint8_t cols[] = {5, 6, 7, 8};
 
 /**
  * @brief Define the keypad matrix row GPIOs
  */
-const uint8_t rows[] = {5};
+const uint8_t rows[] = {22, 21, 20, 19, 18, 17, 16};
 
 /**
  * @brief Create the keypad matrix structure
@@ -105,7 +105,7 @@ KeypadMatrix keypad;
  * @param key Key number
  */
 void key_pressed(uint8_t key){
-//	printf("Key %d pressed\n", key);
+	printf("Key %d pressed\n", key);
 }
 
 /**
@@ -114,7 +114,7 @@ void key_pressed(uint8_t key){
  * @param key Key number
  */
 void key_released(uint8_t key){
-//	printf("Key %d released\n", key);
+	printf("Key %d released\n", key);
 }
 
 /**
@@ -245,7 +245,7 @@ int main(void)
 	// Matrix keyboard inits
 	// Apply the keypad configuration defined earlier and declare the number of columns and rows
 	printf ("keypad init\n");
-	keypad_init(&keypad, cols, rows, 2, 1);
+	keypad_init(&keypad, cols, rows, KBD_COL, KBD_ROW);
 	// Assign the callbacks for each event
 	keypad_on_press(&keypad, key_pressed);
 	keypad_on_release(&keypad, key_released);

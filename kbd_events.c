@@ -66,55 +66,54 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 	int i, index;
 
 	// define which key corresponds to which byte in the keypad array; yes this is tedious, but this is better for readibility and quick changes
-	// SIDE_MAX_SIZE = size of the array (columns = rows)
-	bool add11 = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	bool no3   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
-	bool no5   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
-	bool no7   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
-	bool add9  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 3];		// column, rows
-	bool maj3  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 3];
-	bool b5    = kbd->pressed [(2 * SIDE_MAX_SIZE) + 3];
-	bool maj7  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 3];
+	bool add11 = kbd->pressed [(4 * KBD_COL) + 0];		// row , column
+	bool no3   = kbd->pressed [(4 * KBD_COL) + 1];
+	bool no5   = kbd->pressed [(4 * KBD_COL) + 2];
+	bool no7   = kbd->pressed [(4 * KBD_COL) + 3];
+	bool add9  = kbd->pressed [(5 * KBD_COL) + 0];		// row , column
+	bool maj3  = kbd->pressed [(5 * KBD_COL) + 1];
+	bool b5    = kbd->pressed [(5 * KBD_COL) + 2];
+	bool maj7  = kbd->pressed [(5 * KBD_COL) + 3];
 	// instrument on 6-bit (64 instruments) instead of 8-bit (256 instruments)
 	bool sw0   = false;
 	bool sw1   = false;
-//	bool sw0   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 4];		// column, rows
-//	bool sw1   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 4];
-	bool sw2   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 4];
-	bool sw3   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 4];
-	bool sw4   = kbd->pressed [(0 * SIDE_MAX_SIZE) + 5];		// column, rows
-	bool sw5   = kbd->pressed [(1 * SIDE_MAX_SIZE) + 5];
-	bool sw6   = kbd->pressed [(2 * SIDE_MAX_SIZE) + 5];
-	bool sw7   = kbd->pressed [(3 * SIDE_MAX_SIZE) + 5];
+//	bool sw0   = kbd->pressed [(5 * KBD_COL) + 0];
+//	bool sw1   = kbd->pressed [(5 * KBD_COL) + 1];
+	bool sw2   = kbd->pressed [(5 * KBD_COL) + 2];
+	bool sw3   = kbd->pressed [(5 * KBD_COL) + 3];
+	bool sw4   = kbd->pressed [(6 * KBD_COL) + 0];
+	bool sw5   = kbd->pressed [(6 * KBD_COL) + 1];
+	bool sw6   = kbd->pressed [(6 * KBD_COL) + 2];
+	bool sw7   = kbd->pressed [(6 * KBD_COL) + 3];
 
 	// chromatic keyboard
-	when_pressed [0]  = 0;													// when the key has been pressed
-	when_pressed [1]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
-	when_pressed [2]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 0];
-	when_pressed [3]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 0];
-	when_pressed [4]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 0];
-	when_pressed [5]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
-	when_pressed [6]  = kbd->press_times [(1 * SIDE_MAX_SIZE) + 1];
-	when_pressed [7]  = kbd->press_times [(2 * SIDE_MAX_SIZE) + 1];
-	when_pressed [8]  = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
-	when_pressed [9]  = kbd->press_times [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	when_pressed [10] = kbd->press_times [(1 * SIDE_MAX_SIZE) + 2];
-	when_pressed [11] = kbd->press_times [(2 * SIDE_MAX_SIZE) + 2];
-	when_pressed [12] = kbd->press_times [(3 * SIDE_MAX_SIZE) + 2];
+	when_pressed [0]  = 0;												// when the key has been pressed
+	when_pressed [1]  = kbd->press_times [(0 * KBD_COL) + 0];
+	when_pressed [2]  = kbd->press_times [(0 * KBD_COL) + 1];
+	when_pressed [3]  = kbd->press_times [(0 * KBD_COL) + 2];
+	when_pressed [4]  = kbd->press_times [(0 * KBD_COL) + 3];
+	when_pressed [5]  = kbd->press_times [(1 * KBD_COL) + 0];
+	when_pressed [6]  = kbd->press_times [(1 * KBD_COL) + 1];
+	when_pressed [7]  = kbd->press_times [(1 * KBD_COL) + 2];
+	when_pressed [8]  = kbd->press_times [(1 * KBD_COL) + 3];
+	when_pressed [9]  = kbd->press_times [(2 * KBD_COL) + 0];
+	when_pressed [10] = kbd->press_times [(2 * KBD_COL) + 1];
+	when_pressed [11] = kbd->press_times [(2 * KBD_COL) + 2];
+	when_pressed [12] = kbd->press_times [(2 * KBD_COL) + 3];
 
 	pressed [0]  = false;										// if the key has been pressed
-	pressed [1]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 0];		// column, rows
-	pressed [2]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 0];
-	pressed [3]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 0];
-	pressed [4]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 0];
-	pressed [5]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 1];		// column, rows
-	pressed [6]  = kbd->pressed [(1 * SIDE_MAX_SIZE) + 1];
-	pressed [7]  = kbd->pressed [(2 * SIDE_MAX_SIZE) + 1];
-	pressed [8]  = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
-	pressed [9]  = kbd->pressed [(0 * SIDE_MAX_SIZE) + 2];		// column, rows
-	pressed [10] = kbd->pressed [(1 * SIDE_MAX_SIZE) + 2];
-	pressed [11] = kbd->pressed [(2 * SIDE_MAX_SIZE) + 2];
-	pressed [12] = kbd->pressed [(3 * SIDE_MAX_SIZE) + 2];
+	pressed [1]  = kbd->pressed [(0 * KBD_COL) + 0];
+	pressed [2]  = kbd->pressed [(0 * KBD_COL) + 1];
+	pressed [3]  = kbd->pressed [(0 * KBD_COL) + 2];
+	pressed [4]  = kbd->pressed [(0 * KBD_COL) + 3];
+	pressed [5]  = kbd->pressed [(1 * KBD_COL) + 0];
+	pressed [6]  = kbd->pressed [(1 * KBD_COL) + 1];
+	pressed [7]  = kbd->pressed [(1 * KBD_COL) + 2];
+	pressed [8]  = kbd->pressed [(1 * KBD_COL) + 3];
+	pressed [9]  = kbd->pressed [(2 * KBD_COL) + 0];
+	pressed [10] = kbd->pressed [(2 * KBD_COL) + 1];
+	pressed [11] = kbd->pressed [(2 * KBD_COL) + 2];
+	pressed [12] = kbd->pressed [(2 * KBD_COL) + 3];
 
 
 	// analyse the keypad, key by key

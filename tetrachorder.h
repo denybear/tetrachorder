@@ -16,7 +16,9 @@
 #define CIN_NOTEON		0x9
 #define CIN_NOTEOFF		0x8
 #define CIN_PGMCHANGE	0xC
-#define CHANNEL			0	 // midi channel 1
+#define CHANNEL			0		// midi channel 1
+#define KBD_ROW			7		// number of rows defined on matrix keypad
+#define KBD_COL			4		// number of columns defined on matrix keypad
 
 
 /***************************/
