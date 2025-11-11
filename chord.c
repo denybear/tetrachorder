@@ -99,7 +99,7 @@ void set_3 (void *pointer) {	// major 3rd
 
 void set_b3 (void *pointer) {	// minor 3rd
 	chord_t *chord = (chord_t *)pointer;
-	chord->bitmap |= 0b000010000000000000000000;
+	chord->bitmap |= 0b000100000000000000000000;
 //                     R 2334 5 677R 9  1   1
 //                        mM     mM     1   3
 }
@@ -120,7 +120,7 @@ void set_4 (void *pointer) {	// sus 4th : should be useless as the same as add9 
 
 void reset_5 (void *pointer) {
 	chord_t *chord = (chord_t *)pointer;
-	chord->bitmap &= 0b111111101111111111111111;
+	chord->bitmap &= 0b111111001111111111111111;
 //                     R 2334 5 677R 9  1   1
 //                        mM     mM     1   3
 }

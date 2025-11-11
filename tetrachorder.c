@@ -1,21 +1,3 @@
-// TO DO
-// X push dans github, puis virer les fichiers inutiles
-// X refactor PICOUI with .h, new button + encoder module, etc
-// X audio.h à refaire (ou mettre à jour avec les vraies libraries)
-// X regarder le problème des listes midis qui ne sont pas envoyées comme elles devraient
-// X tenir compte du fait qu'on peut taper plusieurs touches chromatiques en même temps: C, Cs, etc
-// X faire fonctionner le synthetizer sur le core 1 ??? fare fonctionner le synth
-// X rajouter des instruments, synth.c à revoir
-//
-// BEWARE, but it should not happen:
-// 1- We should recalculate the chord if voicing changes (this should be done already, in theory)
-// 2- From a sound perspective, should we adapt the master volume to the number of channels? Or assume same fixed volume for each channel, and master is just the sum of the
-// individual channels? --> master volume applies to all channels (sum of individual channels, as seen in synth.cpp);
-// this ensures volume stays the same regardless the number of active playing channels 
-
-
-
-
 /*
  * The MIT License (MIT)
  *
@@ -105,7 +87,7 @@ KeypadMatrix keypad;
  * @param key Key number
  */
 void key_pressed(uint8_t key){
-	printf("Key %d pressed\n", key);
+//	printf("Key %d pressed\n", key);
 }
 
 /**
@@ -114,7 +96,7 @@ void key_pressed(uint8_t key){
  * @param key Key number
  */
 void key_released(uint8_t key){
-	printf("Key %d released\n", key);
+//	printf("Key %d released\n", key);
 }
 
 /**
@@ -216,6 +198,9 @@ void light_strip (uint32_t color) {
 /*------------- MAIN -------------*/
 int main(void)
 {
+	// Overclock
+	set_sys_clock_khz(200000, 1);		// 200MHz = 200000kHz
+
 	stdio_init_all();
 	board_init();
 	printf("Tetrachorder\r\n");
