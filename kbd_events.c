@@ -66,54 +66,54 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 	int i, index;
 
 	// define which key corresponds to which byte in the keypad array; yes this is tedious, but this is better for readibility and quick changes
-	bool add11 = kbd->pressed [(4 * KBD_COL) + 0];		// row , column
-	bool no3   = kbd->pressed [(4 * KBD_COL) + 1];
-	bool no5   = kbd->pressed [(4 * KBD_COL) + 2];
-	bool no7   = kbd->pressed [(4 * KBD_COL) + 3];
-	bool add9  = kbd->pressed [(5 * KBD_COL) + 0];		// row , column
-	bool maj3  = kbd->pressed [(5 * KBD_COL) + 1];
-	bool b5    = kbd->pressed [(5 * KBD_COL) + 2];
-	bool maj7  = kbd->pressed [(5 * KBD_COL) + 3];
+	bool add11 = kbd->pressed [27];
+	bool no3   = kbd->pressed [23];
+	bool no5   = kbd->pressed [19];
+	bool no7   = kbd->pressed [15];
+	bool add9  = kbd->pressed [3];
+	bool maj3  = kbd->pressed [7];
+	bool b5    = kbd->pressed [11];
+	bool maj7  = kbd->pressed [2];
 	// instrument on 6-bit (64 instruments) instead of 8-bit (256 instruments)
 	bool sw0   = false;
 	bool sw1   = false;
 //	bool sw0   = kbd->pressed [(5 * KBD_COL) + 0];
 //	bool sw1   = kbd->pressed [(5 * KBD_COL) + 1];
-	bool sw2   = kbd->pressed [(5 * KBD_COL) + 2];
-	bool sw3   = kbd->pressed [(5 * KBD_COL) + 3];
-	bool sw4   = kbd->pressed [(6 * KBD_COL) + 0];
-	bool sw5   = kbd->pressed [(6 * KBD_COL) + 1];
-	bool sw6   = kbd->pressed [(6 * KBD_COL) + 2];
-	bool sw7   = kbd->pressed [(6 * KBD_COL) + 3];
+	bool sw2   = kbd->pressed [10];
+	bool sw3   = kbd->pressed [6];
+	bool sw4   = kbd->pressed [14];
+	bool sw5   = kbd->pressed [18];
+	bool sw6   = kbd->pressed [22];
+	bool sw7   = kbd->pressed [26];
 
 	// chromatic keyboard
 	when_pressed [0]  = 0;												// when the key has been pressed
-	when_pressed [1]  = kbd->press_times [(0 * KBD_COL) + 0];
-	when_pressed [2]  = kbd->press_times [(0 * KBD_COL) + 1];
-	when_pressed [3]  = kbd->press_times [(0 * KBD_COL) + 2];
-	when_pressed [4]  = kbd->press_times [(0 * KBD_COL) + 3];
-	when_pressed [5]  = kbd->press_times [(1 * KBD_COL) + 0];
-	when_pressed [6]  = kbd->press_times [(1 * KBD_COL) + 1];
-	when_pressed [7]  = kbd->press_times [(1 * KBD_COL) + 2];
-	when_pressed [8]  = kbd->press_times [(1 * KBD_COL) + 3];
-	when_pressed [9]  = kbd->press_times [(2 * KBD_COL) + 0];
-	when_pressed [10] = kbd->press_times [(2 * KBD_COL) + 1];
-	when_pressed [11] = kbd->press_times [(2 * KBD_COL) + 2];
-	when_pressed [12] = kbd->press_times [(2 * KBD_COL) + 3];
+	when_pressed [1]  = kbd->press_times [24];
+	when_pressed [2]  = kbd->press_times [25];
+	when_pressed [3]  = kbd->press_times [20];
+	when_pressed [4]  = kbd->press_times [21];
+	when_pressed [5]  = kbd->press_times [16];
+	when_pressed [6]  = kbd->press_times [12];
+	when_pressed [7]  = kbd->press_times [17];
+	when_pressed [8]  = kbd->press_times [8];
+	when_pressed [9]  = kbd->press_times [13];
+	when_pressed [10] = kbd->press_times [4];
+	when_pressed [11] = kbd->press_times [9];
+	when_pressed [12] = kbd->press_times [0];
 
 	pressed [0]  = false;										// if the key has been pressed
-	pressed [1]  = kbd->pressed [(0 * KBD_COL) + 0];
-	pressed [2]  = kbd->pressed [(0 * KBD_COL) + 1];
-	pressed [3]  = kbd->pressed [(0 * KBD_COL) + 2];
-	pressed [4]  = kbd->pressed [(0 * KBD_COL) + 3];
-	pressed [5]  = kbd->pressed [(1 * KBD_COL) + 0];
-	pressed [6]  = kbd->pressed [(1 * KBD_COL) + 1];
-	pressed [7]  = kbd->pressed [(1 * KBD_COL) + 2];
-	pressed [8]  = kbd->pressed [(1 * KBD_COL) + 3];
-	pressed [9]  = kbd->pressed [(2 * KBD_COL) + 0];
-	pressed [10] = kbd->pressed [(2 * KBD_COL) + 1];
-	pressed [11] = kbd->pressed [(2 * KBD_COL) + 2];
-	pressed [12] = kbd->pressed [(2 * KBD_COL) + 3];
+	pressed [1]  = kbd->pressed [24];
+	pressed [2]  = kbd->pressed [25];
+	pressed [3]  = kbd->pressed [20];
+	pressed [4]  = kbd->pressed [21];
+	pressed [5]  = kbd->pressed [16];
+	pressed [6]  = kbd->pressed [12];
+	pressed [7]  = kbd->pressed [17];
+	pressed [8]  = kbd->pressed [8];
+	pressed [9]  = kbd->pressed [13];
+	pressed [10] = kbd->pressed [4];
+	pressed [11] = kbd->pressed [9];
+	pressed [12] = kbd->pressed [0];
 
 
 	// analyse the keypad, key by key
@@ -142,9 +142,18 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 
 		// analyse modulation keyboard
 		if (add9) set_9 (chord);
-		if (maj3) set_3 (chord);
-		if (b5) set_b5 (chord);
-		if (maj7) set_7 (chord);
+		if (maj3) {
+			reset_3 (chord);
+			set_3 (chord);
+		}
+		if (b5) {
+			reset_5 (chord);
+			set_b5 (chord);
+		}
+		if (maj7) {
+			reset_7 (chord);
+			set_7 (chord);
+		}
 		if (add11) set_11 (chord);
 		if (no3) reset_3 (chord);
 		if (no5) reset_5 (chord);

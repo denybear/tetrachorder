@@ -87,7 +87,7 @@ KeypadMatrix keypad;
  * @param key Key number
  */
 void key_pressed(uint8_t key){
-//	printf("Key %d pressed\n", key);
+	printf("Key %d pressed\n", key);
 }
 
 /**
@@ -96,7 +96,7 @@ void key_pressed(uint8_t key){
  * @param key Key number
  */
 void key_released(uint8_t key){
-//	printf("Key %d released\n", key);
+	printf("Key %d released\n", key);
 }
 
 /**
