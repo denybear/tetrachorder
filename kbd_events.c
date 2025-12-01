@@ -79,12 +79,12 @@ uint8_t parse_keyboard (void *pointer, KeypadMatrix *kbd) {
 	bool sw1   = false;
 //	bool sw0   = kbd->pressed [(5 * KBD_COL) + 0];
 //	bool sw1   = kbd->pressed [(5 * KBD_COL) + 1];
-	bool sw2   = kbd->pressed [10];
-	bool sw3   = kbd->pressed [6];
+	bool sw2   = kbd->pressed [22];
+	bool sw3   = kbd->pressed [26];
 	bool sw4   = kbd->pressed [14];
 	bool sw5   = kbd->pressed [18];
-	bool sw6   = kbd->pressed [22];
-	bool sw7   = kbd->pressed [26];
+	bool sw6   = kbd->pressed [6];
+	bool sw7   = kbd->pressed [10];
 
 	// chromatic keyboard
 	when_pressed [0]  = 0;												// when the key has been pressed
