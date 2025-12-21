@@ -87,7 +87,7 @@ KeypadMatrix keypad;
  * @param key Key number
  */
 void key_pressed(uint8_t key){
-	printf("Key %d pressed\n", key);
+	//printf("Key %d pressed\n", key);
 }
 
 /**
@@ -96,7 +96,7 @@ void key_pressed(uint8_t key){
  * @param key Key number
  */
 void key_released(uint8_t key){
-	printf("Key %d released\n", key);
+	//printf("Key %d released\n", key);
 }
 
 /**
@@ -120,13 +120,13 @@ void onchange(rotary_encoder_t *encoder) {
 		if (voicing_bass < 0) {
 			voicing_bass = -1;
 			no_bass = true;
-			printf("voicing_bass is off\n");
+			//printf("voicing_bass is off\n");
 		}
 		else {
 			voicing_bass = MAX (0, voicing_bass);
 			voicing_bass = MIN ((127-12), voicing_bass);			
 			no_bass = false;
-			printf("voicing_bass is on, value is: %d\n", voicing_bass);
+			//printf("voicing_bass is on, value is: %d\n", voicing_bass);
 		}
 	}
 	else {
@@ -134,7 +134,7 @@ void onchange(rotary_encoder_t *encoder) {
 		voicing += encoder->direction;
 		voicing = MAX (0, voicing);
 		voicing = MIN ((127-12), voicing);
-		printf("voicing is on, value is: %d\n", voicing);		
+		//printf("voicing is on, value is: %d\n", voicing);		
 	}
 	//printf("Position: %d\n", encoder->position);
 	//printf("State: %d%d\n", encoder->state&0b10 ? 1 : 0, encoder->state&0b01);
@@ -143,7 +143,7 @@ void onchange(rotary_encoder_t *encoder) {
 void onpress(button_t *button) {
 	if (!button->state) {				// we do this only when the button is pressed, but not depressed
 		is_bass_voicing = is_bass_voicing ? false : true;
-		printf("Button pressed, is_bass_voicing is: %s\n", is_bass_voicing ? "true (we select bass voicing)" : "false (we select regular voicing)");
+		//printf("Button pressed, is_bass_voicing is: %s\n", is_bass_voicing ? "true (we select bass voicing)" : "false (we select regular voicing)");
 	}
 }
 
