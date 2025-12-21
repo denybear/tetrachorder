@@ -56,9 +56,9 @@ void reset_playback_all () {
 // load an instrument of a song into a channel
 bool load_instrument(int instr, int chan) {
 
-	// check boundaries
-	if ((instr <0) || (instr >= NB_INSTRUMENTS)) return false;
-	if ((chan <0) || (chan >= CHANNEL_COUNT)) return false;
+	// check boundaries : NOT REQUIRED as non-defined instruments are set to 0
+	//if ((instr <0) || (instr >= NB_INSTRUMENTS)) return false;
+	//if ((chan <0) || (chan >= CHANNEL_COUNT)) return false;
 
 	// assign instrument parameters to the channel
 

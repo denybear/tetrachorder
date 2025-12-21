@@ -27,53 +27,53 @@ const float frequencies[] = {
 // attack in ms, decay in ms, sustain volume (0xffff = 100% of max volume; 0xafff = 70% of the volume), sustain in ms,
 // release in ms, channel volume (set at 0x7fff, ie.50% of max volume to avoid saturation; it can be up to 0xffff)
 const uint32_t instruments[64][6] = {
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// sinus
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// piano
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// piano2
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// reed
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// sinus
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// piano
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// piano2
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// reed
 	{30, 20, 0xffff, 2000, 1000, 0xffff},			// guitar
 	{30, 20, 0xffff, 2000, 1000, 0xffff},			// plucked guitar
-	{120, 50, 0xffff, 2000, 100, 0xffff},			// violin
-	{120, 50, 0xffff, 2000, 100, 0xffff},			// horn
-	{120, 50, 0xffff, 2000, 100, 0xffff},			// oboe
-	{120, 50, 0xffff, 2000, 100, 0xffff},			// flute
-	{120, 50, 0xffff, 2000, 100, 0xffff},			// clarinette
+	{120, 50, 0xffff, 8000, 100, 0xffff},			// violin
+	{120, 50, 0xffff, 5000, 100, 0xffff},			// horn
+	{120, 50, 0xffff, 5000, 100, 0xffff},			// oboe
+	{120, 50, 0xffff, 5000, 100, 0xffff},			// flute
+	{120, 50, 0xffff, 5000, 100, 0xffff},			// clarinette
 
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// DW8000 instruments (index 11)
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// DW8000 instruments (index 11)
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
 	
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 20
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// index 20
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
 	
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 30
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// index 30
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
 	
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 40
-	{30, 20, 0xffff, 2000, 1000, 0xffff},
-	{30, 20, 0xffff, 2000, 1000, 0xffff},			// index 42
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// index 40
+	{30, 20, 0xffff, 5000, 1000, 0xffff},
+	{30, 20, 0xffff, 5000, 1000, 0xffff},			// index 42
 	{0},
 	{0},
 	{0},
