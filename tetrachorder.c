@@ -261,7 +261,10 @@ int main(void)
 		// this is what we will do, and hopefully the timer is implemented in keypad.c already
 
 		keypad_read (&keypad);
-		sleep_ms(20);
+		for (int i = 0; i < 40; i++) {		// wait for 20ms: 40 * 500µs = 20ms
+			tud_task ();					// we shall call tud_task () every < 1ms
+			sleep_us (500);
+		}
 
 		instrument = parse_keyboard (chord, &keypad);	// analyse key presses to get which chords has been selected
 
